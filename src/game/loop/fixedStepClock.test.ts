@@ -20,7 +20,7 @@ const FRACTION_DIGITS = 9;
 
 function buildConfig() {
   return {
-    arena: { width: 960, height: 540 },
+    arena: { width: 960, height: 540, islands: [] },
     player: { radius: 24, speed: SPEED, turnRateDegrees: 150 },
   } satisfies GameConfig;
 }

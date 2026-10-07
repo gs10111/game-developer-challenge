@@ -16,7 +16,7 @@ const ACCUMULATED_ERROR =
 
 function buildConfig() {
   return {
-    arena: { width: 960, height: 540 },
+    arena: { width: 960, height: 540, islands: [] },
     player: { radius: 24, speed: 140, turnRateDegrees: 90 },
   } satisfies GameConfig;
 }

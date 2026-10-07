@@ -1,4 +1,5 @@
 import type { GameConfig } from '../config/gameConfig';
+import { createIslandIndex } from './collision/islandIndex';
 import { SHIP_POOL_CAPACITY } from './limits';
 import { HEADING_UNITS_PER_TURN } from './math/rotation';
 import { acquire, createPool } from './pool';
@@ -17,6 +18,10 @@ function frozenCopy<Value>(value: Value): Value {
   if (typeof value !== 'object' || value === null) {
     return value;
   }
+  if (Array.isArray(value)) {
+    const items: readonly unknown[] = value;
+    return Object.freeze(items.map((item) => frozenCopy(item))) as Value;
+  }
   const copy: Record<string, unknown> = {};
   for (const [key, nested] of Object.entries(value)) {
     copy[key] = frozenCopy(nested);
@@ -31,6 +36,8 @@ function acquirePlayer(ships: Pool<Ship>, config: GameConfig): Ship {
   }
   player.x = config.arena.width / 2;
   player.y = config.arena.height / 2;
+  player.previousX = player.x;
+  player.previousY = player.y;
   player.radius = config.player.radius;
   player.speed = config.player.speed;
   player.turnRate = headingUnitsFromDegrees(config.player.turnRateDegrees);
@@ -46,6 +53,7 @@ export function createMatch(config: GameConfig, seed: number): World {
     rng: createRandomSource(seed),
     commands: 0,
     config: snapshot,
+    islands: createIslandIndex(snapshot.arena),
     ships,
     player: acquirePlayer(ships, snapshot),
   };

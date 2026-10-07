@@ -6,8 +6,8 @@ This document describes the system as it is built, and grows with each slice. Th
 
 | Layer | Path | Role | Built so far |
 | --- | --- | --- | --- |
-| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size and player movement |
-| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pool, PRNG, rotation, commands, movement, arena bounds |
+| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands and player movement |
+| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pool, PRNG, rotation, commands, movement, islands, collision with islands and arena bounds |
 | Loop | `src/game/loop` | Timing that drives the simulation | Fixed-step clock |
 | Render | `src/game/render` | PixiJS scene | Not yet |
 | Input | `src/game/input` | Keyboard and touch, sampled once per step | Not yet |
@@ -26,11 +26,12 @@ The continuous state of a match lives in one mutable `World` ([ADR-0006](docs/ad
 | `seed`, `rng` | The match seed and the state of the random generator |
 | `commands` | The command mask of the step being run |
 | `config` | A deep-frozen copy of the config, taken when the match is created |
+| `islands` | The island parts with their edge normals and bounding boxes, and the grid that finds the parts near a ship |
 | `ships`, `player` | The ship pool and the player's slot in it |
 
-`createMatch(config, seed)` copies and freezes the config, so later changes to the options reach only the next match. It creates the pool and places the player at the centre of the arena.
+`createMatch(config, seed)` copies and freezes the config, so later changes to the options reach only the next match. It builds the island index and the pool, and places the player at the centre of the arena.
 
-`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask and runs the systems in a fixed order: player intent, movement, arena bounds. Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
+`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask and runs the systems in a fixed order: player intent, movement, and the collision stage (island collision, arena bounds, blocked ships). Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
 
 Pools have a fixed capacity, reset a slot in place when it is acquired or released, and are scanned by slot index. The step allocates nothing.
 
@@ -45,9 +46,25 @@ The same seed and the same command log always produce the same match ([ADR-0005]
 
 The rounding rule and the turn-then-move order are part of the replay format: changing either invalidates recorded matches.
 
-### Movement and bounds
+### Movement
 
-The player moves forward at the configured speed while the forward command is held and turns at the configured rate whether or not it is moving. There is no acceleration and no inertia. After movement, each active ship is clamped so that its collision circle stays inside the arena ([ADR-0007](docs/adr/0007-collision-strategy.md)).
+The player moves forward at the configured speed while the forward command is held and turns at the configured rate whether or not it is moving. There is no acceleration and no inertia. Before a ship moves, movement records where it was.
+
+### Islands and collision
+
+Ships are circles and islands are convex polygons; a concave island is written in the config as several convex parts ([ADR-0007](docs/adr/0007-collision-strategy.md)). The default arena is 16 by 9 tiles of 64 units with four islands in five rectangular parts.
+
+When a match is created, each part gets the unit outward normal of every edge and a bounding box, and is listed in the cells of a uniform grid, from the cell that holds its lowest corner to the cell that holds its highest. A ship looks only at the parts in the cells under its own bounding box, found with the same mapping.
+
+The overlap test finds the edge of the part that the circle's centre is furthest outside of. When the centre projects inside that edge, the circle is pushed along the edge's normal; when it projects past an end, it is pushed away from that vertex. A circle that only touches does not overlap.
+
+The collision stage runs three systems, each over the active ships:
+
+1. Island collision pushes the ship out of its deepest overlap, up to three times. Taking the deepest first is what lets a ship slide across the seam between two parts: the corner buried in the seam overlaps less than the shore the ship is sliding along.
+2. Arena bounds clamps the ship so that its circle stays inside the arena.
+3. Blocked ships sends a ship that still overlaps an island back to where it was before the step. This settles the places the first two cannot, such as a notch narrower than the hull. The heading is kept, so the ship can turn away.
+
+A ship that starts a step clear of the islands and inside the arena ends it the same way, and a ship driven into a shore at an angle keeps the part of its movement that runs along the shore. Two things are assumed and not yet enforced: ships are placed clear of the islands, and whoever places a ship records its position as the previous one.
 
 ## Fixed-step clock
 
@@ -64,5 +81,7 @@ There is no backend. The MSW service worker starts before the first render in ev
 
 ## Current limitations
 
-- The arena size, the player's start position and the movement values are provisional until the arena and balancing slices.
+- The arena size, the island layout, the player's start position and the movement values are provisional until the arena is drawn and the game is balanced.
+- Island polygons and the configured speed are not validated: a malformed part or a ship fast enough to cross an island in one step would not be caught.
+- A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
 - Nothing is rendered yet: the rules above are exercised by unit tests only.

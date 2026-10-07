@@ -116,3 +116,17 @@ VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): PL-06, CB-01 and CB-02 move to "In progress" in docs/requirements.md, with "U" added to their Test column; ADR-0007 gains an as-built line for the collision response (deepest-first push-out, clamp, previous-position fallback, tolerance); ARCHITECTURE.md gains the islands and the collision stage; the two follow-ups of plan 0002 are closed.
 CARRIED TO LATER SLICES: the config schema validates island parts (three or more vertices, clockwise, convex, inside the arena), a start clear of the islands, and a distance per step below the hull radius; the spawner sets `previousX`, `previousY` when it places a ship and checks its points against the islands.
 ```
+
+## Outcome
+
+- Tests first: 43 new tests across the five subtasks, red seen for all of them.
+- Test audit, full mode: approved; 93 of 93 tests in three consecutive runs.
+- Review, rigorous mode: approved with notes. No finding on spec, correctness against the plan's guarantee, standards, ADRs, determinism or loop cost. Measured by the reviewer over 300 random convex layouts and 40 long matches on the default layout: no ship ended a step outside the arena or overlapping a part by more than 1.3e-13.
+- Both follow-ups of plan 0002 that this slice took on are closed: arrays survive the config snapshot, and the ship has one source for its fresh state.
+
+Carried to later slices, in addition to the list above:
+
+- A ship held forward into a concave corner wider than a right angle does not come to rest; it cycles through a few positions up to about one unit apart, never inside an island. The default layout cannot reach it. Settle it before any two parts meet at a concave angle other than 90 degrees.
+- `islandCollision` and `blockedShips` repeat the same loop over the grid; one helper that writes the deepest overlap would serve both.
+- No test pins `ISLAND_PUSH_ROUNDS = 3` against 2 or `CONTACT_TOLERANCE = 1e-9` against values up to 1e-6; neither changes a guarantee.
+- In the default layout a scan runs up to eight overlap tests, so the worst case is about 40,000 operations per step, near 0.2% of the frame, twice the plan's estimate.

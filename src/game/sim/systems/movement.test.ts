@@ -18,7 +18,7 @@ const ACCUMULATED_ERROR = LONGEST_COURSE * SINE_TABLE_ERROR + LONGEST_HOLD * ULP
 
 function buildConfig() {
   return {
-    arena: { width: 960, height: 540 },
+    arena: { width: 960, height: 540, islands: [] },
     player: { radius: 24, speed: 140, turnRateDegrees: 150 },
   } satisfies GameConfig;
 }
@@ -211,6 +211,38 @@ describe('player movement (ADR-0005, ADR-0006)', () => {
     expectClose(spinner.heading, 512 - 64);
     expect(spinner).toMatchObject({ x: 700, y: 400, thrust: 0, turn: -1 });
     expect(wreck).toMatchObject({ active: false, x: 200, y: 450, heading: 0, thrust: 1, turn: 1 });
+  });
+
+  test('PL-06 movement records where each active ship was before it moved', () => {
+    const world = createMatch(buildConfig(), SEED);
+    const { player } = world;
+    const cruiser = launch(world, { x: 300, y: 100, heading: 256, speed: 50, thrust: 1 });
+    const aground = launch(world, { x: 950, y: 400, radius: 10, speed: 90, thrust: 1 });
+    const anchored = launch(world, { x: 700, y: 400, turnRate: 64, turn: -1 });
+    const wreck = launch(world, { x: 200, y: 450, speed: 50, thrust: 1 });
+    wreck.active = false;
+    wreck.previousX = 11;
+    wreck.previousY = 22;
+    const underWay = [player, cruiser, aground, anchored];
+
+    for (let count = 0; count < 2 * STEPS_PER_SECOND; count += 1) {
+      const departures = underWay.map(({ x, y }) => ({ previousX: x, previousY: y }));
+
+      step(world, Command.Forward | Command.TurnRight);
+
+      const recorded = underWay.map(({ previousX, previousY }) => ({ previousX, previousY }));
+      const stride = Math.hypot(player.x - player.previousX, player.y - player.previousY);
+
+      expect(recorded).toEqual(departures);
+      expectClose(stride, 140 / STEPS_PER_SECOND);
+      expectClose(cruiser.previousX - cruiser.x, 50 / STEPS_PER_SECOND);
+      expect(aground).toMatchObject({ x: 950, previousX: 950 });
+      expect(anchored).toMatchObject({ x: 700, y: 400, previousX: 700, previousY: 400 });
+      expect(wreck).toMatchObject({ x: 200, y: 450, previousX: 11, previousY: 22 });
+    }
+
+    expect(new Set(underWay.map(({ previousX }) => previousX)).size).toBe(underWay.length);
+    expect(player.previousY).not.toBe(270);
   });
 
   test('SC-10 doubling the configured speed doubles the distance travelled', () => {

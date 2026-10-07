@@ -50,6 +50,7 @@ The code rules of Pirate Battle, in one place. Whoever implements follows them a
 | Lint | `pnpm lint` | native |
 | Types | `pnpm typecheck` | native |
 | Unit tests | `pnpm test` | native |
+| Unit tests of one requirement | `pnpm test -t "<ID>"` | native |
 | E2E of a slice | `docker compose run --rm app pnpm test:e2e --grep "<pattern>"` | container only (ADR-0017) |
 | Update visual baselines | `docker compose run --rm app pnpm test:e2e --update-snapshots` | container only (ADR-0017) |
 

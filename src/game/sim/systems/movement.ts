@@ -8,6 +8,8 @@ export function movement(world: World, dt: number): void {
     const ship = slots[index];
     if (ship?.active) {
       const distance = ship.thrust * ship.speed * dt;
+      ship.previousX = ship.x;
+      ship.previousY = ship.y;
       ship.heading = normaliseHeading(ship.heading + ship.turn * ship.turnRate * dt);
       ship.x += cosine(ship.heading) * distance;
       ship.y += sine(ship.heading) * distance;

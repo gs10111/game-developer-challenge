@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { GameConfig } from '../config/gameConfig';
+import { createIslandIndex } from './collision/islandIndex';
 import { createMatch } from './createMatch';
 import { SHIP_POOL_CAPACITY } from './limits';
 import { acquire } from './pool';
@@ -9,7 +10,30 @@ import { createShip } from './world';
 
 function buildConfig() {
   return {
-    arena: { width: 960, height: 540 },
+    arena: { width: 960, height: 540, islands: [] },
+    player: { radius: 24, speed: 140, turnRateDegrees: 150 },
+  } satisfies GameConfig;
+}
+
+function buildArchipelago() {
+  return {
+    arena: {
+      width: 960,
+      height: 540,
+      islands: [
+        [
+          { x: 100, y: 100 },
+          { x: 300, y: 100 },
+          { x: 300, y: 200 },
+          { x: 100, y: 200 },
+        ],
+        [
+          { x: 600, y: 300 },
+          { x: 760, y: 380 },
+          { x: 640, y: 460 },
+        ],
+      ],
+    },
     player: { radius: 24, speed: 140, turnRateDegrees: 150 },
   } satisfies GameConfig;
 }
@@ -78,6 +102,85 @@ describe('match creation (ADR-0006)', () => {
     expect(running.player).toMatchObject({ radius: 24, speed: 140, turnRate: 640 / 3 });
   });
 
+  test('SC-12 the islands of a running match are frozen arrays that keep their vertices when the source changes afterwards', () => {
+    const source = buildArchipelago();
+    const running = createMatch(source, 1);
+
+    for (const part of source.arena.islands) {
+      for (const vertex of part) {
+        vertex.x += 50;
+        vertex.y -= 25;
+      }
+      part.push({ x: 0, y: 0 });
+    }
+    source.arena.islands.push([
+      { x: 800, y: 40 },
+      { x: 900, y: 40 },
+      { x: 850, y: 120 },
+    ]);
+
+    const { islands } = running.config.arena;
+    const snapshotParts = [...reachableObjects(running.config)];
+    const sourceParts = reachableObjects(source);
+
+    expect(Array.isArray(islands)).toBe(true);
+    expect(islands.map((part) => Array.isArray(part))).toEqual([true, true]);
+    expect(islands).toStrictEqual(buildArchipelago().arena.islands);
+    expect(snapshotParts).toContain(islands);
+    for (const part of islands) {
+      expect(snapshotParts).toContain(part);
+      for (const vertex of part) {
+        expect(snapshotParts).toContain(vertex);
+      }
+    }
+    expect(snapshotParts).toHaveLength(13);
+    expect(snapshotParts.filter((part) => sourceParts.has(part))).toEqual([]);
+    expect(snapshotParts.filter((part) => !Object.isFrozen(part))).toEqual([]);
+
+    const next = createMatch(source, 1);
+
+    expect(next.config.arena.islands).toHaveLength(3);
+    expect(next.config.arena.islands).toStrictEqual(source.arena.islands);
+    expect(running.config.arena.islands).toStrictEqual(buildArchipelago().arena.islands);
+  });
+
+  test('SC-10 a match carries the island parts of the config it was created with', () => {
+    const openSea = buildConfig();
+    const archipelago = buildArchipelago();
+    const lagoon = buildArchipelago();
+    lagoon.arena.islands = [
+      [
+        { x: 400, y: 200 },
+        { x: 560, y: 200 },
+        { x: 560, y: 340 },
+        { x: 400, y: 340 },
+      ],
+    ];
+
+    expect(createMatch(openSea, 1).config.arena.islands).toStrictEqual([]);
+    expect(createMatch(archipelago, 1).config.arena.islands).toStrictEqual([
+      [
+        { x: 100, y: 100 },
+        { x: 300, y: 100 },
+        { x: 300, y: 200 },
+        { x: 100, y: 200 },
+      ],
+      [
+        { x: 600, y: 300 },
+        { x: 760, y: 380 },
+        { x: 640, y: 460 },
+      ],
+    ]);
+    expect(createMatch(lagoon, 1).config.arena.islands).toStrictEqual([
+      [
+        { x: 400, y: 200 },
+        { x: 560, y: 200 },
+        { x: 560, y: 340 },
+        { x: 400, y: 340 },
+      ],
+    ]);
+  });
+
   test('MT-05 creating a match again yields a fresh world: step zero, player at the arena centre with heading zero, nothing shared with the previous match', () => {
     const config = buildConfig();
     const previous = createMatch(config, 7);
@@ -130,6 +233,52 @@ describe('match creation (ADR-0006)', () => {
     wide.arena.height = 400;
 
     expect(createMatch(wide, 7).player).toMatchObject({ x: 600, y: 200, heading: 0 });
+  });
+
+  test("MT-05 each match builds its own island index, and the player's previous position starts at its position", () => {
+    const source = buildArchipelago();
+    const previous = createMatch(source, 7);
+    const next = createMatch(source, 7);
+    const previousParts = reachableObjects(previous.islands);
+    const nextParts = [...reachableObjects(next.islands)];
+
+    expect(next.islands).toStrictEqual(createIslandIndex(buildArchipelago().arena));
+    expect(next.islands.parts).toHaveLength(2);
+    expect(next.islands.parts.map(({ vertices }) => vertices)).toStrictEqual(
+      buildArchipelago().arena.islands,
+    );
+    expect(previous.islands).toStrictEqual(next.islands);
+    expect(nextParts).toContain(next.islands.parts);
+    expect(nextParts).toContain(next.islands.cells);
+    expect(nextParts.filter((part) => previousParts.has(part))).toEqual([]);
+
+    source.arena.islands.pop();
+    for (const vertex of source.arena.islands.flat()) {
+      vertex.x += 40;
+    }
+    const moved = createMatch(source, 7);
+
+    expect(moved.islands).toStrictEqual(createIslandIndex(source.arena));
+    expect(moved.islands.parts).toHaveLength(1);
+    expect(moved.islands).not.toEqual(next.islands);
+    expect(next.islands).toStrictEqual(createIslandIndex(buildArchipelago().arena));
+    expect(createMatch(buildConfig(), 7).islands.parts).toEqual([]);
+
+    const wide = buildArchipelago();
+    wide.arena.width = 1200;
+    wide.arena.height = 400;
+
+    expect(next.player).toMatchObject({ x: 480, y: 270, previousX: 480, previousY: 270 });
+    expect(moved.player).toMatchObject({ x: 480, y: 270, previousX: 480, previousY: 270 });
+    expect(createMatch(wide, 7).player).toMatchObject({
+      x: 600,
+      y: 200,
+      previousX: 600,
+      previousY: 200,
+    });
+    for (const ship of next.ships.slots.slice(1)) {
+      expect(ship).toMatchObject({ active: false, previousX: 0, previousY: 0 });
+    }
   });
 
   test('PW-03 a match keeps the seed it was created with', () => {

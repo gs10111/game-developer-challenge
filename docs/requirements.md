@@ -15,7 +15,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | PL-03 | Broadside fires three parallel projectiles, with separate left and right commands | `sim/systems/weapons` | T4 | Pending |
 | PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/damage` | T4, T5 | Pending |
 | PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3, U | In progress |
-| PL-06 | Cannot cross islands | `sim/systems/collision` | T3 | Pending |
+| PL-06 | Cannot cross islands | `sim/systems/collision` | T3, U | In progress |
 | PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | Pending |
 | PL-08 | Touch controls for the same commands | `input/touch`, `ui/TouchControls` | T9 | Pending |
 | PL-09 | Move and fire at the same time | `input` (per-step command state) | T4 | Pending |
@@ -41,8 +41,8 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
-| CB-01 | Arena with water and at least one island | `sim/world`, `render/arena` | T3, visual | Pending |
-| CB-02 | Islands block ships and projectiles | `sim/systems/collision` | T3, T4 | Pending |
+| CB-01 | Arena with water and at least one island | `config/gameConfig.ts`, `sim/collision`, `render/arena` | T3, U, visual | In progress |
+| CB-02 | Islands block ships and projectiles | `sim/systems/collision` | T3, T4, U | In progress |
 | CB-03 | Projectiles follow configured direction, speed, damage and range or lifetime | `sim/systems/projectiles` | T4 | Pending |
 | CB-04 | Player shots hit only enemies; enemy shots hit only the player | `sim/systems/collision` (layers) | T4, T5 | Pending |
 | CB-05 | Each projectile applies damage only once | `sim/systems/damage` | T4 | Pending |
