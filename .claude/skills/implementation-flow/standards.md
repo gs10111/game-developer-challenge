@@ -29,7 +29,9 @@ The code rules of Pirate Battle, in one place. Whoever implements follows them a
 
 | Layer | Rule | Why |
 | --- | --- | --- |
-| `src/game/sim` | Imports nothing from `pixi.js`, `react` or another layer. Systems are functions `(world, dt) => void`, run in the fixed order. | ADR-0001, ADR-0006 |
+| `src/game/sim` | Imports nothing from `pixi.js`, `react` or another layer, except the config type from `src/game/config` with `import type`. Systems are functions `(world, dt) => void`, run in the fixed order. | ADR-0001, ADR-0006 |
+| `src/game/config` | Imports nothing. Its values reach the simulation as the argument of `createMatch`. | SC-10, SC-12 |
+| `src/game/loop` | Pure timing that drives the simulation. May import from `src/game/sim`; the simulation never imports from it. | ADR-0004 |
 | `src/game/render` | Reads `World` and the per-step event queue after the step. Values drawn in the canvas never come through the UI store. | ADR-0003, ADR-0006 |
 | `src/ui` | Never holds a reference to `World`. Reaches the game only through `GameCanvas`, the `GameApp` methods, the event bus and the UI store. | ADR-0001, ADR-0003 |
 | `src/api`, `src/mocks`, `src/storage` | The Axios client, the MSW handlers and the fixtures share one contract module. Zod runs here and nowhere else. | ADR-0014 |

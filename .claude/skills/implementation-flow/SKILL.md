@@ -7,7 +7,7 @@ description: The implementation workflow for the Pirate Battle repository (React
 
 The challenge is graded on behaviour a reviewer can verify and on how clearly responsibilities are separated. This flow makes every change end in the same place: a requirement implemented, proven by a test, consistent with an ADR, and recorded. Follow the six phases in order; each one ends with a gate, and when a gate cannot be met, stop and tell the user what is missing instead of working around it.
 
-You are the **maestro**: you scope, plan, delegate and verify. Outside the tooling path you write no code and no tests; the files you write are ADRs, `docs/requirements.md` and `ARCHITECTURE.md`.
+You are the **maestro**: you scope, plan, delegate and verify. Outside the tooling path you write no code and no tests; the files you write are plans, ADRs, `docs/requirements.md` and `ARCHITECTURE.md`.
 
 ## Sources of truth
 
@@ -46,7 +46,8 @@ After Phase 1, pick the path. An explicit request ("use the standard path") outr
 ### Common rules
 
 - **Start:** note the base SHA (`git rev-parse HEAD`). When `git status --short` shows changes left from an earlier slice, show them and ask the user whether to commit first: reviews compare the working tree with the base SHA, so one slice has to equal one diff.
-- **Delegation:** paste into each agent's prompt the slice block, the approved plan, the base SHA, the mode and, on the large path, the subtask. The agent does not see this conversation.
+- **Plans:** on the standard and large paths, save the approved plan as `docs/plans/NNNN-short-title.md`, with the slice block at the top. The agents work from that file.
+- **Delegation:** give each agent the path of the plan, the base SHA, the mode and, on the large path, the subtask, plus anything specific to the machine it runs on. The agent does not see this conversation.
 - **Commits:** nobody commits unless the user asks, and agents never do. You prepare the message.
 - **Agent stop:** when an agent returns `STOP:`, show the reason to the user and wait. Never discard working-tree changes without asking.
 - **Retries:** a rejection by the test-auditor, the reviewer or Phase 6 goes back to the `implementer` with the findings. After the fix, start again from the test-auditor: no fix enters without an audit. At most two retries per slice; on the third rejection, stop and show the findings.
