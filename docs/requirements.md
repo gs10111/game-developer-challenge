@@ -10,11 +10,11 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
-| PL-01 | Move forward and rotate both ways, with speeds from the config | `sim/systems/movement` | T3 | Pending |
+| PL-01 | Move forward and rotate both ways, with speeds from the config | `sim/systems/movement` | T3, U | In progress |
 | PL-02 | Front cannon fires one projectile | `sim/systems/weapons` | T4 | Pending |
 | PL-03 | Broadside fires three parallel projectiles, with separate left and right commands | `sim/systems/weapons` | T4 | Pending |
 | PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/damage` | T4, T5 | Pending |
-| PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3 | Pending |
+| PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3, U | In progress |
 | PL-06 | Cannot cross islands | `sim/systems/collision` | T3 | Pending |
 | PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | Pending |
 | PL-08 | Touch controls for the same commands | `input/touch`, `ui/TouchControls` | T9 | Pending |
@@ -58,14 +58,14 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | MT-02 | Each enemy destroyed by the player is worth 1 point | `sim/systems/score` | T4 | Pending |
 | MT-03 | Match ends when time runs out or health reaches zero, with the reason recorded | `sim/match` | T6 | Pending |
 | MT-04 | Ending stops movement, attacks, damage, spawns and scoring | `sim/match` | T6 | Pending |
-| MT-05 | Restart creates a fresh match: health, score, timer and entities reset | `sim/createMatch` | T6 | Pending |
+| MT-05 | Restart creates a fresh match: health, score, timer and entities reset | `sim/createMatch` | T6, U | In progress |
 | MT-06 | Health shown above the player and every enemy | `render/healthBars` | T4, visual | Pending |
 | MT-07 | HUD with score and remaining time | `ui/Hud` | T4, T6 | Pending |
 | MT-08 | Manual pause | `input`, `sim/match` | T7 | Pending |
 | MT-09 | Automatic pause on `blur` and on hidden tab (`visibilitychange`) | `game/lifecycle` | T7 | Pending |
 | MT-10 | While paused, timer, cooldowns and simulation are suspended | `sim/clock` | T7 | Pending |
 | MT-11 | Resuming requires a player action | `ui/PauseDialog` | T7 | Pending |
-| MT-12 | Resuming does not apply movement or shots from the paused period | `input`, game loop | T7 | Pending |
+| MT-12 | Resuming does not apply movement or shots from the paused period | `input`, game loop | T7, U | In progress |
 
 ## Animation and feedback (Challenge 2)
 
@@ -91,9 +91,9 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | SC-07 | Last finished match result kept after refresh | `storage/lastResult` | T8 | Pending |
 | SC-08 | Ranking with position, player, score and pagination | `ui/tabs/RankingTab` | T10 | Pending |
 | SC-09 | Match History with date, score, duration, reason and pagination | `ui/tabs/HistoryTab` | T10 | Pending |
-| SC-10 | All gameplay parameters in one typed config | `config/gameConfig.ts` | U, Doc | Pending |
+| SC-10 | All gameplay parameters in one typed config | `config/gameConfig.ts` | U, Doc | In progress |
 | SC-11 | Balancing changes only the config, never system logic | `config` | Doc | Pending |
-| SC-12 | Config snapshot taken at match start; changes apply to the next match only | `sim/createMatch` | T1 | Pending |
+| SC-12 | Config snapshot taken at match start; changes apply to the next match only | `sim/createMatch` | T1, U | In progress |
 | SC-13 | Refresh or leaving the combat screen ends the running match | `game/lifecycle` | T9 | Pending |
 | SC-14 | An abandoned match is not recorded in ranking or history | `api/outbox` | T9 | Pending |
 | SC-15 | Interface, code identifiers and documentation in English | whole project | review | Pending |
@@ -105,7 +105,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | --- | --- | --- | --- | --- |
 | AR-01 | PixiJS for arena, ships, projectiles, effects and bars; React for menus, forms, panels and dialogs | `render`, `ui` | review | Pending |
 | AR-02 | Rules, rendering, input and UI state separated | `sim`, `render`, `input`, `ui`, `eslint.config.js` | lint, Doc | In progress |
-| AR-03 | Movement, damage and spawns independent of frame rate | `game/loop` | T3, U | Pending |
+| AR-03 | Movement, damage and spawns independent of frame rate | `game/loop` | T3, U | In progress |
 | AR-04 | UI kept in sync without a React render per frame | `ui/store` | React Profiler, Doc | Pending |
 | AR-05 | Textures loaded once and reused | `render/assets` | T2 | Pending |
 | AR-06 | Loading failure handled before combat, with retry | `ui/screens/Loading` | T2 | Pending |
@@ -178,7 +178,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | --- | --- | --- | --- |
 | PW-01 | Main flows in Chromium, desktop and mobile | `playwright.config.ts` | In progress |
 | PW-02 | Visual regression of menu, stable arena and result screen, with versioned baselines | `e2e/visual` | Pending |
-| PW-03 | Seeded scenarios and controlled simulation time | `page.clock`, `window.__game` | Pending |
+| PW-03 | Seeded scenarios and controlled simulation time | `page.clock`, `window.__game`, `sim` (seed, PRNG, sine table, replay) | In progress |
 | PW-04 | Instrumentation observes state without skipping rules, inputs, collisions or rendering | `game/testHooks` | Pending |
 | PW-05 | Combat tests use the real controls and check their effects | `e2e/combat` | Pending |
 | PW-06 | Each test starts from an isolated state | base fixture | Pending |

@@ -54,6 +54,7 @@ Traced across refresh rates:
 
 - Easier: pause, replay (ADR-0005) and test stepping all reduce to "do not call `step`" or "call `step` n times".
 - Harder: the renderer keeps previous and current transforms to interpolate.
+- As built: the five-step limit is applied to the step count, not to the accumulator. In floating point the subtract-in-a-loop form above runs four steps from five steps of accumulated time, so the clock divides, floors, and drops the surplus when the count reaches five.
 - Revisit: if the simulation step itself grows expensive, lower `MAX_STEPS` and measure.
 
 ## Sources

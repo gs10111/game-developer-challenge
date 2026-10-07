@@ -99,3 +99,17 @@ ORDER: 1 → 2 → 3 → 4, sequential.
 VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): PL-01, PL-05, AR-03, SC-10, SC-12, MT-05, MT-12 and PW-03 move to "In progress" in docs/requirements.md (they become Done when the T3 flow exists); ADR-0005 gains a consequence line recording that the PRNG keeps its state in the world instead of a closure, and ADR-0004 one recording that the clamp is applied to the step count.
 ```
+
+## Outcome
+
+- Tests first: 36 tests, red seen for all of them (subtask 3 was finished by a second implementer run, which confirmed red by temporary edits).
+- Test audit: approved for each of subtasks 1 to 3 and for the whole slice; 50 of 50 tests in two consecutive runs.
+- Review, rigorous mode: approved with notes. No finding on spec, correctness, standards, ADRs, determinism or loop cost.
+
+Carried to later slices:
+
+- `createMatch` copies the config as plain records, so an array in the config would lose its array nature. Fix it in the first slice that adds a list to the config (islands, spawn mix).
+- The config schema slice has to reject non-finite numbers and an arena smaller than the player's hull; the simulation masks both instead of failing.
+- Pin the numeric values of the command bits in a test when replay logs start being stored.
+- A world snapshot needs its own routine: the pool holds its reset function, so the world is not plain data.
+- `createShip` and `resetShip` repeat the list of ship fields; fold them into one source when the ship gains fields.

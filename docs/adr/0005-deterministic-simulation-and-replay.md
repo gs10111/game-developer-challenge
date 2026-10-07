@@ -42,6 +42,8 @@ export function mulberry32(seed: number): () => number {
 
 - Easier: a Playwright test can load a known replay and assert the final score; bugs become reproducible from a record.
 - Harder: every gameplay change invalidates stored replays, so records carry a simulation version and old versions are flagged instead of replayed.
+- As built: the PRNG runs the same mulberry32 arithmetic, with its state in a holder inside the world instead of a closure, so that a snapshot of the world captures it.
+- As built: a heading reads the nearest table entry (round, then wrap), and within a step a ship turns first and then moves along the new heading. Both are part of the replay format: changing either invalidates stored replays.
 - Revisit: if quantized rotation feels coarse, raise the resolution (1/1024 of a turn) and regenerate the table.
 
 ## Sources
