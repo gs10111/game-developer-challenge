@@ -7,6 +7,8 @@ import tseslint from 'typescript-eslint';
 const pureSimulation = 'The simulation is pure TypeScript (ADR-0001, ADR-0006).';
 const deterministicSimulation = 'Use the seeded PRNG and the step counter (ADR-0005).';
 const tableTrigonometry = 'Use sine and cosine from math/rotation, which read the table (ADR-0005).';
+const exactArithmetic =
+  'Engines may round this differently. Use +, -, *, / and Math.sqrt, which are exact (ADR-0005).';
 const isolatedSimulation = 'The simulation imports no other layer (ADR-0001, ADR-0006).';
 const configAsArgument =
   'The simulation imports only the config type; values arrive through createMatch (SC-12).';
@@ -17,9 +19,37 @@ const platformTimeAndRandomness = [
   { object: 'performance', property: 'now', message: deterministicSimulation },
 ];
 
-const engineTrigonometry = [
+const approximatedMathFunctions = [
+  'tan',
+  'asin',
+  'acos',
+  'atan',
+  'atan2',
+  'sinh',
+  'cosh',
+  'tanh',
+  'asinh',
+  'acosh',
+  'atanh',
+  'exp',
+  'expm1',
+  'log',
+  'log1p',
+  'log2',
+  'log10',
+  'pow',
+  'hypot',
+  'cbrt',
+];
+
+const engineDependentMath = [
   { object: 'Math', property: 'sin', message: tableTrigonometry },
   { object: 'Math', property: 'cos', message: tableTrigonometry },
+  ...approximatedMathFunctions.map((property) => ({
+    object: 'Math',
+    property,
+    message: exactArithmetic,
+  })),
 ];
 
 export const simulationGuardrails = defineConfig(
@@ -68,7 +98,12 @@ export const simulationGuardrails = defineConfig(
     files: ['src/game/sim/**/*.{ts,tsx}'],
     ignores: ['**/*.test.{ts,tsx}'],
     rules: {
-      'no-restricted-properties': ['error', ...platformTimeAndRandomness, ...engineTrigonometry],
+      'no-restricted-properties': ['error', ...platformTimeAndRandomness, ...engineDependentMath],
+      'no-restricted-syntax': [
+        'error',
+        { selector: "BinaryExpression[operator='**']", message: exactArithmetic },
+        { selector: "AssignmentExpression[operator='**=']", message: exactArithmetic },
+      ],
     },
   },
 );

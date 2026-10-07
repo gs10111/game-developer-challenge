@@ -81,7 +81,7 @@ describe('simulation lint guardrails', () => {
     },
   );
 
-  test.each(['Math.sin(1)', 'Math.cos(1)'])(
+  test.each(['Math.sin(1)', 'Math.cos(1)', 'Math.atan2(1, 2)', 'Math.hypot(3, 4)', 'Math.pow(2, 3)'])(
     'AR-02 simulation sources cannot call %s, while tests may use it as an oracle',
     async (call) => {
       const source = `export const probe = ${call};\n`;
@@ -93,6 +93,17 @@ describe('simulation lint guardrails', () => {
       expect(await reportedRules(source, simulationTestFile)).toEqual([]);
     },
   );
+
+  test('AR-02 simulation sources cannot use the exponent operator, and exact arithmetic passes', async () => {
+    const exponent = `export const probe = (side: number) => side ** 2;\n`;
+    const compound = `export function probe(side: number) {\n  let area = side;\n  area **= 2;\n  return area;\n}\n`;
+    const exact = `export const probe = (side: number) => Math.sqrt(side * side + 1) / 2;\n`;
+
+    expect(await reportedRules(exponent, simulationFile)).toEqual(['no-restricted-syntax']);
+    expect(await reportedRules(compound, simulationFile)).toEqual(['no-restricted-syntax']);
+    expect(await reportedRules(exponent, simulationTestFile)).toEqual([]);
+    expect(await reportedRules(exact, simulationFile)).toEqual([]);
+  });
 
   test('AR-02 the guardrails leave the other layers alone', async () => {
     const source = `import 'react';\nimport '../game/loop/fixedStepClock';\nexport const probe = [Math.random(), Math.sin(1)];\n`;
@@ -112,6 +123,7 @@ describe('simulation lint guardrails', () => {
       'no-restricted-imports',
       '@typescript-eslint/no-restricted-imports',
       'no-restricted-properties',
+      'no-restricted-syntax',
     ];
 
     for (const rule of guardrailRules) {
