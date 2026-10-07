@@ -4,6 +4,8 @@ import { describe, expect, test } from 'vitest';
 import { simulationGuardrails } from '../../eslint.config.js';
 
 const simulationFile = 'src/game/sim/probe.ts';
+const simulationTestFile = 'src/game/sim/probe.test.ts';
+const nestedSimulationFile = 'src/game/sim/systems/collision/probe.ts';
 const interfaceFile = 'src/ui/probe.tsx';
 
 const guardrailsOnly = new ESLint({
@@ -35,17 +37,65 @@ describe('simulation lint guardrails', () => {
     expect(await reportedRules(source, simulationFile)).toEqual(['no-restricted-imports']);
   });
 
+  test.each([
+    [simulationFile, '../loop/fixedStepClock'],
+    [simulationFile, '../render/ships'],
+    [simulationFile, '../input/keyboard'],
+    [simulationFile, '../../ui/Hud'],
+    [simulationFile, '../../api/contracts'],
+    [simulationFile, '../../mocks/handlers'],
+    [simulationFile, '../../storage/settings'],
+    [nestedSimulationFile, '../../../loop/fixedStepClock'],
+  ])('AR-02 the simulation file %s cannot import %s', async (filePath, moduleName) => {
+    const source = `import '${moduleName}';\n`;
+
+    expect(await reportedRules(source, filePath)).toEqual(['no-restricted-imports']);
+  });
+
+  test('AR-02 the simulation may import its own modules', async () => {
+    const source = `import { step } from './step';\nimport { sine } from '../math/rotation';\nexport const probe = [step, sine];\n`;
+
+    expect(await reportedRules(source, simulationFile)).toEqual([]);
+  });
+
+  test('AR-02 the simulation imports the config as a type only', async () => {
+    const valueImport = `import { DEFAULT_GAME_CONFIG } from '../config/gameConfig';\nexport const probe = DEFAULT_GAME_CONFIG;\n`;
+    const typeImport = `import type { GameConfig } from '../config/gameConfig';\nexport type Probe = GameConfig;\n`;
+
+    expect(await reportedRules(valueImport, simulationFile)).toEqual([
+      '@typescript-eslint/no-restricted-imports',
+    ]);
+    expect(await reportedRules(valueImport, simulationTestFile)).toEqual([
+      '@typescript-eslint/no-restricted-imports',
+    ]);
+    expect(await reportedRules(typeImport, simulationFile)).toEqual([]);
+  });
+
   test.each(['Math.random()', 'Date.now()', 'performance.now()'])(
-    'AR-02 the simulation cannot call %s',
+    'AR-02 the simulation cannot call %s, in sources or in tests',
     async (call) => {
       const source = `export const probe = ${call};\n`;
 
       expect(await reportedRules(source, simulationFile)).toEqual(['no-restricted-properties']);
+      expect(await reportedRules(source, simulationTestFile)).toEqual(['no-restricted-properties']);
+    },
+  );
+
+  test.each(['Math.sin(1)', 'Math.cos(1)'])(
+    'AR-02 simulation sources cannot call %s, while tests may use it as an oracle',
+    async (call) => {
+      const source = `export const probe = ${call};\n`;
+
+      expect(await reportedRules(source, simulationFile)).toEqual(['no-restricted-properties']);
+      expect(await reportedRules(source, nestedSimulationFile)).toEqual([
+        'no-restricted-properties',
+      ]);
+      expect(await reportedRules(source, simulationTestFile)).toEqual([]);
     },
   );
 
   test('AR-02 the guardrails leave the other layers alone', async () => {
-    const source = `import 'react';\nexport const probe = Math.random();\n`;
+    const source = `import 'react';\nimport '../game/loop/fixedStepClock';\nexport const probe = [Math.random(), Math.sin(1)];\n`;
 
     expect(await reportedRules(source, interfaceFile)).toEqual([]);
   });
@@ -58,10 +108,15 @@ describe('simulation lint guardrails', () => {
       };
       return config.rules?.[rule]?.[0];
     };
+    const guardrailRules = [
+      'no-restricted-imports',
+      '@typescript-eslint/no-restricted-imports',
+      'no-restricted-properties',
+    ];
 
-    expect(await severityOf(simulationFile, 'no-restricted-imports')).toBe(2);
-    expect(await severityOf(simulationFile, 'no-restricted-properties')).toBe(2);
-    expect(await severityOf(interfaceFile, 'no-restricted-imports')).toBeUndefined();
-    expect(await severityOf(interfaceFile, 'no-restricted-properties')).toBeUndefined();
+    for (const rule of guardrailRules) {
+      expect(await severityOf(simulationFile, rule)).toBe(2);
+      expect(await severityOf(interfaceFile, rule)).toBeUndefined();
+    }
   });
 });
