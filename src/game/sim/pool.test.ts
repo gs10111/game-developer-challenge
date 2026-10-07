@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { Layer } from './collision/layers';
 import { acquire, createPool, release } from './pool';
 import type { Pool, PoolSlot } from './pool';
 import { testWeapons } from './testing/testWeapons';
@@ -24,6 +25,8 @@ function overwriteEveryField(slot: PoolSlot, fresh: PoolSlot): void {
       Reflect.set(slot, field, !freshValue);
     } else if (field === 'weapons') {
       Reflect.set(slot, field, testWeapons());
+    } else if (field === 'layer') {
+      Reflect.set(slot, field, Layer.Enemy);
     } else {
       throw new Error(`No way to overwrite the field ${field}`);
     }
@@ -65,6 +68,8 @@ describe('entity pool (ADR-0006)', () => {
 
     expect(projectile).toStrictEqual({
       active: false,
+      layer: null,
+      consumed: false,
       x: 0,
       y: 0,
       previousX: 0,

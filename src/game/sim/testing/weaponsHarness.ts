@@ -3,7 +3,7 @@ import { Command } from '../commands';
 import type { GameEvent } from '../events';
 import { step } from '../step';
 import type { Projectile, Ship, World } from '../world';
-import { testWeapons } from './testWeapons';
+import { testPlayer } from './testPlayer';
 
 export const SEED = 20261007;
 export const EVERY_WEAPON = Command.FireFront | Command.FireLeft | Command.FireRight;
@@ -11,7 +11,7 @@ export const EVERY_WEAPON = Command.FireFront | Command.FireLeft | Command.FireR
 export function buildConfig(islands: ConvexPolygon[] = []) {
   return {
     arena: { width: 2000, height: 2000, islands },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
+    player: testPlayer(),
   } satisfies GameConfig;
 }
 

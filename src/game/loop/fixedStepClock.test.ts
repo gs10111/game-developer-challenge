@@ -4,7 +4,7 @@ import { Command } from '../sim/commands';
 import { createMatch } from '../sim/createMatch';
 import { step } from '../sim/step';
 import { STEPS_PER_SECOND } from '../sim/stepRate';
-import { testWeapons } from '../sim/testing/testWeapons';
+import { testPlayer } from '../sim/testing/testPlayer';
 import { advance, createFixedStepClock, interpolation, reset } from './fixedStepClock';
 import type { FixedStepClock } from './fixedStepClock';
 
@@ -22,7 +22,7 @@ const FRACTION_DIGITS = 9;
 function buildConfig() {
   return {
     arena: { width: 960, height: 540, islands: [] },
-    player: { radius: 24, speed: SPEED, turnRateDegrees: 150, weapons: testWeapons() },
+    player: { ...testPlayer(), speed: SPEED },
   } satisfies GameConfig;
 }
 

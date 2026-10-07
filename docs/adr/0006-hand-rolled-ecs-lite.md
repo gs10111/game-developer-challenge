@@ -29,6 +29,7 @@ A match holds at most around a hundred live entities (ships, projectiles, effect
 - Easier: each system has a unit test; the step order is readable in one place.
 - Harder: pool bookkeeping is manual, so released entities must be fully reset.
 - As built: the event queue holds 128 pre-allocated events, is emptied at the start of every step and drops what does not fit, so whoever consumes it reads it after each step and not once per frame. Acquiring from a pool scans for the first free slot, which costs up to the pool size per acquisition and keeps slot order deterministic.
+- As built: the damage stage runs after the collision stage. It applies the damage that hits banked on each ship, reports a ship that reaches zero health, releases a destroyed enemy and every spent projectile, and also gives the point for the enemy. The score is given there and not in a later stage because the released ship has lost its layer by then, and the event queue may have dropped the event and is never read back.
 - Revisit: if entity counts grow by orders of magnitude, migrate components to typed arrays or adopt bitECS.
 
 ## Sources

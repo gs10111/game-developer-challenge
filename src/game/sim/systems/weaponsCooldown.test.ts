@@ -73,6 +73,9 @@ function shotSteps(world: World, steps: number, commandsAt: (index: number) => n
     const wasFlying = world.projectiles.slots.map(({ active }) => active);
     step(world, commandsAt(index));
     for (const { weapon } of eventsOf(world)) {
+      if (weapon === null) {
+        throw new Error('An event of a weapons step carries no weapon');
+      }
       log[weapon].push(index);
     }
     for (const [position, slot] of world.projectiles.slots.entries()) {
@@ -416,10 +419,12 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     step(oneBerth, Command.FireLeft);
 
     expect(eventsOf(oneBerth)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
     ]);
     expect(slotAt(oneBerth, 9)).toStrictEqual({
       active: true,
+      layer: 'playerShot',
+      consumed: false,
       x: 984,
       y: 969,
       previousX: 984,
@@ -508,12 +513,12 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
       ...times(6, [0]).map(() => ({ speed: 240, radius: 3, damage: 5, remainingSteps: 89 })),
     ]);
     expect(eventsOf(world)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'front', x: 1028, y: 1000, directionX: 1, directionY: 0 },
-      { kind: 'shotFired', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
-      { kind: 'shotFired', weapon: 'right', x: 1000, y: 1027, directionX: 0, directionY: 1 },
-      { kind: 'shotFired', weapon: 'front', x: 1466, y: 400, directionX: -1, directionY: 0 },
-      { kind: 'shotFired', weapon: 'left', x: 1500, y: 433, directionX: 0, directionY: 1 },
-      { kind: 'shotFired', weapon: 'right', x: 1500, y: 367, directionX: 0, directionY: -1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'front', x: 1028, y: 1000, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'right', x: 1000, y: 1027, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: null, weapon: 'front', x: 1466, y: 400, directionX: -1, directionY: 0 },
+      { kind: 'shotFired', layer: null, weapon: 'left', x: 1500, y: 433, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: null, weapon: 'right', x: 1500, y: 367, directionX: 0, directionY: -1 },
     ]);
     expect(cooldowns(frigate)).toEqual({ frontCooldown: 15, leftCooldown: 60, rightCooldown: 60 });
 

@@ -1,5 +1,6 @@
 import type { GameConfig } from '../config/gameConfig';
 import { createIslandIndex } from './collision/islandIndex';
+import { Layer } from './collision/layers';
 import { createEventQueue } from './events';
 import { EVENT_QUEUE_CAPACITY, PROJECTILE_POOL_CAPACITY, SHIP_POOL_CAPACITY } from './limits';
 import { HEADING_UNITS_PER_TURN } from './math/rotation';
@@ -35,6 +36,7 @@ function acquirePlayer(ships: Pool<Ship>, config: GameConfig): Ship {
   if (player === null) {
     throw new Error('The ship pool has no free slot for the player');
   }
+  player.layer = Layer.Player;
   player.x = config.arena.width / 2;
   player.y = config.arena.height / 2;
   player.previousX = player.x;
@@ -42,6 +44,8 @@ function acquirePlayer(ships: Pool<Ship>, config: GameConfig): Ship {
   player.radius = config.player.radius;
   player.speed = config.player.speed;
   player.turnRate = headingUnitsFromDegrees(config.player.turnRateDegrees);
+  player.health = config.player.health;
+  player.maxHealth = config.player.health;
   player.weapons = config.player.weapons;
   return player;
 }
@@ -60,5 +64,6 @@ export function createMatch(config: GameConfig, seed: number): World {
     player: acquirePlayer(ships, snapshot),
     projectiles: createPool(PROJECTILE_POOL_CAPACITY, createProjectile, resetProjectile),
     events: createEventQueue(EVENT_QUEUE_CAPACITY),
+    score: 0,
   };
 }

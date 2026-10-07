@@ -1,9 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import type { Point } from '../../config/gameConfig';
+import { Layer } from '../collision/layers';
 import { Command } from '../commands';
 import { createMatch } from '../createMatch';
+import { acquire } from '../pool';
 import { step } from '../step';
 import { STEPS_PER_SECOND } from '../stepRate';
+import { testWeapons } from '../testing/testWeapons';
 import {
   buildConfig,
   cooldowns,
@@ -33,6 +36,12 @@ const BROADSIDES = [
   { command: Command.FireRight, quarterTurn: QUARTER_TURN },
 ];
 
+interface Squadron {
+  world: World;
+  raider: Ship;
+  neutral: Ship;
+}
+
 function rectangle(left: number, top: number, right: number, bottom: number): Point[] {
   return [
     { x: left, y: top },
@@ -44,6 +53,36 @@ function rectangle(left: number, top: number, right: number, bottom: number): Po
 
 function moor(world: World, x: number, y: number, heading: number): Ship {
   return Object.assign(world.player, { x, y, heading });
+}
+
+function launch(world: World, fitting: Partial<Ship>): Ship {
+  const ship = acquire(world.ships);
+  if (ship === null) {
+    throw new Error('The ship pool has no free slot');
+  }
+  Object.assign(ship, fitting);
+  ship.previousX = ship.x;
+  ship.previousY = ship.y;
+  return ship;
+}
+
+function threeSides(): Squadron {
+  const armed = { weapons: testWeapons(), fireFront: 1, fireLeft: 1, fireRight: 1 } as const;
+  const world = createMatch(buildConfig(), SEED);
+  const raider = launch(world, {
+    ...armed,
+    layer: Layer.Enemy,
+    x: 400,
+    y: 300,
+    heading: QUARTER_TURN,
+    radius: 20,
+  });
+  const neutral = launch(world, { ...armed, x: 1600, y: 1700, heading: 256, radius: 20 });
+  return { world, raider, neutral };
+}
+
+function sevenOf<Value>(value: Value): Value[] {
+  return Array.from({ length: 7 }, () => value);
 }
 
 function pose({ x, y, heading }: Ship) {
@@ -400,6 +439,8 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     expect(flying(rearmed)).toStrictEqual([
       {
         active: true,
+        layer: 'playerShot',
+        consumed: false,
         x: 1033,
         y: 1000,
         previousX: 1030,
@@ -413,6 +454,8 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
       },
       ...[984, 1000, 1016].map((x) => ({
         active: true,
+        layer: 'playerShot',
+        consumed: false,
         x,
         y: 972,
         previousX: x,
@@ -426,6 +469,8 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
       })),
       ...[984, 1000, 1016].map((x) => ({
         active: true,
+        layer: 'playerShot',
+        consumed: false,
         x,
         y: 1028,
         previousX: x,
@@ -457,6 +502,53 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     step(rearmed, 0);
 
     expect(flying(rearmed)).toEqual([]);
+  });
+
+  test('CB-04 a projectile takes the shot layer of the ship that fired it', () => {
+    const { world, raider, neutral } = threeSides();
+    const sides = [...sevenOf('playerShot'), ...sevenOf('enemyShot'), ...sevenOf(null)];
+
+    step(world, EVERY_WEAPON);
+
+    const shots = flying(world);
+    expect([world.player.layer, raider.layer, neutral.layer]).toEqual(['player', 'enemy', null]);
+    expect(shots).toHaveLength(21);
+    expect(shots.map(({ layer }) => layer)).toEqual(sides);
+    expect(shots.map(({ consumed }) => consumed)).toEqual(shots.map(() => false));
+    expect(shots.slice(0, 7).map(course)).toEqual([
+      { x: 1033, y: 1000, directionX: 1, directionY: 0 },
+      { x: 984, y: 969, directionX: 0, directionY: -1 },
+      { x: 1000, y: 969, directionX: 0, directionY: -1 },
+      { x: 1016, y: 969, directionX: 0, directionY: -1 },
+      { x: 984, y: 1031, directionX: 0, directionY: 1 },
+      { x: 1000, y: 1031, directionX: 0, directionY: 1 },
+      { x: 1016, y: 1031, directionX: 0, directionY: 1 },
+    ]);
+    expect(shots.slice(7, 14).map(course)).toEqual([
+      { x: 400, y: 329, directionX: 0, directionY: 1 },
+      { x: 427, y: 284, directionX: 1, directionY: 0 },
+      { x: 427, y: 300, directionX: 1, directionY: 0 },
+      { x: 427, y: 316, directionX: 1, directionY: 0 },
+      { x: 373, y: 284, directionX: -1, directionY: 0 },
+      { x: 373, y: 300, directionX: -1, directionY: 0 },
+      { x: 373, y: 316, directionX: -1, directionY: 0 },
+    ]);
+    expect(shots.slice(14).map(course)).toEqual([
+      { x: 1571, y: 1700, directionX: -1, directionY: 0 },
+      { x: 1616, y: 1727, directionX: 0, directionY: 1 },
+      { x: 1600, y: 1727, directionX: 0, directionY: 1 },
+      { x: 1584, y: 1727, directionX: 0, directionY: 1 },
+      { x: 1616, y: 1673, directionX: 0, directionY: -1 },
+      { x: 1600, y: 1673, directionX: 0, directionY: -1 },
+      { x: 1584, y: 1673, directionX: 0, directionY: -1 },
+    ]);
+
+    hold(world, 0, 20);
+
+    expect(flying(world)).toEqual(shots);
+    expect(shots.map(({ layer }) => layer)).toEqual(sides);
+    expect(shots.map(({ consumed }) => consumed)).toEqual(shots.map(() => false));
+    expect([world.player.layer, raider.layer, neutral.layer]).toEqual(['player', 'enemy', null]);
   });
 
   test('SC-10 the projectile speed, the lifetime and the broadside spacing follow the config', () => {
@@ -536,9 +628,9 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
 
     expect(world.events.count).toBe(3);
     expect(eventsOf(world)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'front', x: 1028, y: 1000, directionX: 1, directionY: 0 },
-      { kind: 'shotFired', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
-      { kind: 'shotFired', weapon: 'right', x: 1000, y: 1027, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'front', x: 1028, y: 1000, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'right', x: 1000, y: 1027, directionX: 0, directionY: 1 },
     ]);
     expect(world.events.items.filter((item, index) => item !== queue[index])).toEqual([]);
     expect(flying(world)).toHaveLength(7);
@@ -584,10 +676,10 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
         if (front === undefined || left === undefined || right === undefined) {
           throw new Error('A weapon pushed no event');
         }
-        expect(shots.map(({ kind, weapon }) => ({ kind, weapon }))).toEqual([
-          { kind: 'shotFired', weapon: 'front' },
-          { kind: 'shotFired', weapon: 'left' },
-          { kind: 'shotFired', weapon: 'right' },
+        expect(shots.map(({ kind, layer, weapon }) => ({ kind, layer, weapon }))).toEqual([
+          { kind: 'shotFired', layer: 'player', weapon: 'front' },
+          { kind: 'shotFired', layer: 'player', weapon: 'left' },
+          { kind: 'shotFired', layer: 'player', weapon: 'right' },
         ]);
         expectAt(front, along(player, bow, FRONT_MUZZLE));
         expectAt({ x: front.directionX, y: front.directionY }, bow);
@@ -600,6 +692,22 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
         expect(course(right)).toEqual(origin(slotAt(match, 5)));
       }
     }
+
+    const { world: fleet } = threeSides();
+
+    step(fleet, EVERY_WEAPON);
+
+    expect(eventsOf(fleet)).toStrictEqual([
+      { kind: 'shotFired', layer: 'player', weapon: 'front', x: 1028, y: 1000, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'left', x: 1000, y: 973, directionX: 0, directionY: -1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'right', x: 1000, y: 1027, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: 'enemy', weapon: 'front', x: 400, y: 324, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: 'enemy', weapon: 'left', x: 423, y: 300, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'enemy', weapon: 'right', x: 377, y: 300, directionX: -1, directionY: 0 },
+      { kind: 'shotFired', layer: null, weapon: 'front', x: 1576, y: 1700, directionX: -1, directionY: 0 },
+      { kind: 'shotFired', layer: null, weapon: 'left', x: 1600, y: 1723, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: null, weapon: 'right', x: 1600, y: 1677, directionX: 0, directionY: -1 },
+    ]);
   });
 
   test('CB-06 a shot whose muzzle is inside an island or beyond a wall is removed in the same step, with its event pushed', () => {
@@ -622,7 +730,7 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     expect(flying(ashore)).toEqual([]);
     expect(slotAt(ashore, 0)).toStrictEqual(createProjectile());
     expect(eventsOf(ashore)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'front', x: 1104, y: 1000, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'front', x: 1104, y: 1000, directionX: 1, directionY: 0 },
     ]);
     expect(pose(ashore.player)).toEqual({ x: 1076, y: 1000, heading: 0 });
     expect(cooldowns(ashore.player)).toEqual({
@@ -638,7 +746,9 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
 
     expect(flying(pressingOn)).toEqual([]);
     expect(eventsOf(pressingOn)).toHaveLength(1);
-    expect(eventsOf(pressingOn)).toMatchObject([{ weapon: 'front', y: 1000, directionX: 1 }]);
+    expect(eventsOf(pressingOn)).toMatchObject([
+      { layer: 'player', weapon: 'front', y: 1000, directionX: 1 },
+    ]);
     expectClose(eventsOf(pressingOn).at(0)?.x ?? 0, 1076 + 140 / STEPS_PER_SECOND + FRONT_MUZZLE);
     expectClose(pressingOn.player.x, 1076);
 
@@ -658,8 +768,8 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
       createProjectile(),
     ]);
     expect(eventsOf(alongside)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'left', x: 1049, y: 1000, directionX: -1, directionY: 0 },
-      { kind: 'shotFired', weapon: 'right', x: 1103, y: 1000, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'left', x: 1049, y: 1000, directionX: -1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'right', x: 1103, y: 1000, directionX: 1, directionY: 0 },
     ]);
 
     const offTheCorner = createMatch(buildConfig([quay]), SEED);
@@ -673,7 +783,7 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     ]);
     expect(slotAt(offTheCorner, 2)).toStrictEqual(createProjectile());
     expect(eventsOf(offTheCorner)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'right', x: 1090, y: 901, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'right', x: 1090, y: 901, directionX: 0, directionY: 1 },
     ]);
     expect(pose(offTheCorner.player)).toEqual({ x: 1090, y: 874, heading: 0 });
 
@@ -685,7 +795,7 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     expect(flying(atTheEastWall)).toEqual([]);
     expect(slotAt(atTheEastWall, 0)).toStrictEqual(createProjectile());
     expect(eventsOf(atTheEastWall)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'front', x: 2004, y: 1000, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'front', x: 2004, y: 1000, directionX: 1, directionY: 0 },
     ]);
 
     const atTheNorthWall = createMatch(buildConfig(), SEED);
@@ -705,9 +815,9 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
       createProjectile(),
     ]);
     expect(eventsOf(atTheNorthWall)).toStrictEqual([
-      { kind: 'shotFired', weapon: 'front', x: 1028, y: 24, directionX: 1, directionY: 0 },
-      { kind: 'shotFired', weapon: 'left', x: 1000, y: -3, directionX: 0, directionY: -1 },
-      { kind: 'shotFired', weapon: 'right', x: 1000, y: 51, directionX: 0, directionY: 1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'front', x: 1028, y: 24, directionX: 1, directionY: 0 },
+      { kind: 'shotFired', layer: 'player', weapon: 'left', x: 1000, y: -3, directionX: 0, directionY: -1 },
+      { kind: 'shotFired', layer: 'player', weapon: 'right', x: 1000, y: 51, directionX: 0, directionY: 1 },
     ]);
     expect(cooldowns(atTheNorthWall.player)).toEqual({
       frontCooldown: 30,

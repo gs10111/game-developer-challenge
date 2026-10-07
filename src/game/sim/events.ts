@@ -1,5 +1,9 @@
+import type { Layer } from './collision/layers';
+
 export const EventKind = {
   ShotFired: 'shotFired',
+  Hit: 'hit',
+  Destroyed: 'destroyed',
 } as const;
 
 export type EventKind = (typeof EventKind)[keyof typeof EventKind];
@@ -14,7 +18,8 @@ export type WeaponName = (typeof WeaponName)[keyof typeof WeaponName];
 
 export interface GameEvent {
   kind: EventKind;
-  weapon: WeaponName;
+  layer: Layer | null;
+  weapon: WeaponName | null;
   x: number;
   y: number;
   directionX: number;
@@ -29,7 +34,8 @@ export interface EventQueue {
 function createEvent(): GameEvent {
   return {
     kind: EventKind.ShotFired,
-    weapon: WeaponName.Front,
+    layer: null,
+    weapon: null,
     x: 0,
     y: 0,
     directionX: 0,
@@ -44,7 +50,8 @@ export function createEventQueue(capacity: number): EventQueue {
 export function pushEvent(
   queue: EventQueue,
   kind: EventKind,
-  weapon: WeaponName,
+  layer: Layer | null,
+  weapon: WeaponName | null,
   x: number,
   y: number,
   directionX: number,
@@ -55,6 +62,7 @@ export function pushEvent(
     return null;
   }
   event.kind = kind;
+  event.layer = layer;
   event.weapon = weapon;
   event.x = x;
   event.y = y;

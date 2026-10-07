@@ -5,7 +5,7 @@ import { createMatch } from '../../createMatch';
 import { acquire } from '../../pool';
 import { step } from '../../step';
 import { STEPS_PER_SECOND } from '../../stepRate';
-import { testWeapons } from '../../testing/testWeapons';
+import { testPlayer } from '../../testing/testPlayer';
 import type { Ship, World } from '../../world';
 
 const SEED = 20261007;
@@ -18,7 +18,7 @@ const ACCUMULATED_ERROR =
 function buildConfig() {
   return {
     arena: { width: 960, height: 540, islands: [] },
-    player: { radius: 24, speed: 140, turnRateDegrees: 90, weapons: testWeapons() },
+    player: { ...testPlayer(), turnRateDegrees: 90 },
   } satisfies GameConfig;
 }
 

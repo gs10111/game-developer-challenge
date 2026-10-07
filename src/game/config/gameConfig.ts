@@ -28,6 +28,7 @@ export interface GameConfig {
     readonly radius: number;
     readonly speed: number;
     readonly turnRateDegrees: number;
+    readonly health: number;
     readonly weapons: Weapons;
   };
 }
@@ -73,6 +74,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     radius: 24,
     speed: 140,
     turnRateDegrees: 150,
+    health: 100,
     weapons: {
       front: {
         cooldownSeconds: 0.5,

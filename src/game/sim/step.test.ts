@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { GameConfig, Point } from '../config/gameConfig';
 import { Command } from './commands';
+import { Layer } from './collision/layers';
 import { createMatch } from './createMatch';
 import { EventKind, pushEvent, WeaponName } from './events';
 import type { GameEvent } from './events';
@@ -8,7 +9,10 @@ import { EVENT_QUEUE_CAPACITY } from './limits';
 import { acquire } from './pool';
 import { step } from './step';
 import { STEPS_PER_SECOND } from './stepRate';
+import { placeEnemy } from './testing/combatHarness';
+import { testPlayer } from './testing/testPlayer';
 import { testWeapons } from './testing/testWeapons';
+import { createShip } from './world';
 import type { Projectile, Ship, World } from './world';
 
 const SEED = 20261007;
@@ -31,16 +35,29 @@ interface Fleet {
   world: World;
   escort: Ship;
   wreck: Ship;
+  raider: Ship;
+  gunboat: Ship;
 }
 
 interface Shot extends Projectile {
   berth: number;
 }
 
+interface LostShot extends Shot {
+  struck: boolean;
+}
+
+interface Landing extends Point {
+  radius: number;
+}
+
 interface Sighting {
   player: Ship;
   escort: Ship;
-  fired: GameEvent[];
+  raider: Ship;
+  gunboat: Ship;
+  score: number;
+  events: GameEvent[];
   flying: Shot[];
 }
 
@@ -68,7 +85,7 @@ function buildConfig() {
         ],
       ],
     },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
+    player: testPlayer(),
   } satisfies GameConfig;
 }
 
@@ -87,43 +104,124 @@ function launch(world: World, course: Partial<Ship>): Ship {
   return ship;
 }
 
+function slowGuns(frontDamage: number) {
+  const guns = testWeapons();
+  guns.front.cooldownSeconds = 1.5;
+  guns.front.damage = frontDamage;
+  guns.broadside.cooldownSeconds = 3;
+  return guns;
+}
+
 function createFleet(): Fleet {
   const world = createMatch(buildConfig(), SEED);
   const escort = launch(world, { x: 300, y: 100, heading: 256, radius: 30, speed: 50, thrust: 1 });
   const wreck = launch(world, { x: -40, y: 200, radius: 10, speed: 50, thrust: 1 });
+  const raider = placeEnemy(world, {
+    x: 658,
+    y: 437,
+    heading: 192,
+    weapons: slowGuns(20),
+    fireFront: 1,
+  });
+  const gunboat = placeEnemy(world, {
+    x: 861,
+    y: 200,
+    heading: 128,
+    health: 100,
+    weapons: slowGuns(10),
+    fireFront: 1,
+    fireRight: 1,
+  });
   wreck.active = false;
-  return { world, escort, wreck };
+  return { world, escort, wreck, raider, gunboat };
 }
 
 function sight(fleet: Fleet): Sighting {
-  const { player, events, projectiles } = fleet.world;
+  const { player, events, projectiles, score } = fleet.world;
   return {
     player: { ...player },
     escort: { ...fleet.escort },
-    fired: events.items.slice(0, events.count).map((event) => ({ ...event })),
+    raider: { ...fleet.raider },
+    gunboat: { ...fleet.gunboat },
+    score,
+    events: events.items.slice(0, events.count).map((event) => ({ ...event })),
     flying: projectiles.slots.flatMap((slot, berth) => (slot.active ? [{ ...slot, berth }] : [])),
   };
 }
 
-function volleys(wake: Sighting[], weapon: WeaponName): number[] {
-  return wake.flatMap(({ fired }, index) =>
-    fired.some((event) => event.weapon === weapon) ? [index] : [],
+function volleys(wake: Sighting[], layer: Layer, weapon: WeaponName): number[] {
+  return wake.flatMap(({ events }, index) =>
+    events.filter((event) => event.layer === layer && event.weapon === weapon).map(() => index),
   );
 }
 
-function lostFrom(wake: Sighting[]): Shot[] {
+function blows(wake: Sighting[], layer: Layer): number[] {
+  return wake.flatMap(({ events }, index) =>
+    events
+      .filter((event) => event.kind === EventKind.Hit && event.layer === layer)
+      .map(() => index),
+  );
+}
+
+function changes(values: number[]): number[][] {
+  return values.flatMap((value, index) =>
+    index > 0 && value !== values[index - 1] ? [[index, value]] : [],
+  );
+}
+
+function strikes(blow: GameEvent, shot: Shot): boolean {
+  const along = (blow.x - shot.x) * shot.directionX + (blow.y - shot.y) * shot.directionY;
+  const aside = (blow.x - shot.x) * shot.directionY - (blow.y - shot.y) * shot.directionX;
+  return (
+    blow.kind === EventKind.Hit &&
+    blow.directionX === shot.directionX &&
+    blow.directionY === shot.directionY &&
+    Math.abs(aside) < 1e-9 &&
+    along > -1e-9 &&
+    along < shot.speed / STEPS_PER_SECOND
+  );
+}
+
+function lostFrom(wake: Sighting[]): LostShot[] {
   return wake.flatMap(({ flying }, index) => {
     const next = wake[index + 1];
     return next === undefined
       ? []
-      : flying.filter(({ berth }) => next.flying.every((shot) => shot.berth !== berth));
+      : flying
+          .filter(({ berth }) => next.flying.every((shot) => shot.berth !== berth))
+          .map((shot) => ({ ...shot, struck: next.events.some((blow) => strikes(blow, shot)) }));
   });
 }
 
-function landing({ x, y, directionX, directionY, speed }: Shot): Point {
+function landing({ x, y, directionX, directionY, speed, radius }: Shot): Landing {
   return {
     x: x + (directionX * speed) / STEPS_PER_SECOND,
     y: y + (directionY * speed) / STEPS_PER_SECOND,
+    radius,
+  };
+}
+
+function ashore(left: number, top: number, right: number, bottom: number) {
+  return ({ x, y, radius }: Landing) =>
+    x > left - radius && x < right + radius && y > top - radius && y < bottom + radius;
+}
+
+function fates(lost: LostShot[]) {
+  const stopped = lost
+    .filter(({ remainingSteps, struck }) => remainingSteps > 0 && !struck)
+    .map(landing);
+  const pastTheSouthWall = stopped.filter(({ y }) => y > 540).length;
+  const pastTheEastWall = stopped.filter(({ x }) => x > 960).length;
+  const onTheQuay = stopped.filter(ashore(600, 200, 700, 340)).length;
+  const onTheCay = stopped.filter(ashore(740, 380, 830, 440)).length;
+  return {
+    spent: lost.filter(({ remainingSteps }) => remainingSteps === 0).length,
+    onAShip: lost.filter(({ remainingSteps, struck }) => remainingSteps > 0 && struck).length,
+    pastTheSouthWall,
+    pastTheEastWall,
+    onTheQuay,
+    onTheCay,
+    elsewhere: stopped.length - pastTheSouthWall - pastTheEastWall - onTheQuay - onTheCay,
   };
 }
 
@@ -158,9 +256,9 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
     const world = createMatch(buildConfig(), SEED);
     const { events } = world;
     const slots = [...events.items];
-    pushEvent(events, EventKind.ShotFired, WeaponName.Front, 508, 270, 1, 0);
-    pushEvent(events, EventKind.ShotFired, WeaponName.Left, 480, 243, 0, -1);
-    pushEvent(events, EventKind.ShotFired, WeaponName.Right, 480, 297, 0, 1);
+    pushEvent(events, EventKind.ShotFired, Layer.Player, WeaponName.Front, 508, 270, 1, 0);
+    pushEvent(events, EventKind.ShotFired, Layer.Player, WeaponName.Left, 480, 243, 0, -1);
+    pushEvent(events, EventKind.ShotFired, Layer.Player, WeaponName.Right, 480, 297, 0, 1);
 
     expect(events.count).toBe(3);
 
@@ -170,10 +268,13 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
     expect(world.events).toBe(events);
     expect(events.items).toHaveLength(EVENT_QUEUE_CAPACITY);
     expect(events.items.filter((item, index) => item !== slots[index])).toEqual([]);
-    expect(pushEvent(events, EventKind.ShotFired, WeaponName.Right, 12, 34, 0, 1)).toBe(slots[0]);
+    expect(pushEvent(events, EventKind.ShotFired, Layer.Enemy, WeaponName.Right, 12, 34, 0, 1)).toBe(
+      slots[0],
+    );
     expect(events.count).toBe(1);
     expect(slots[0]).toStrictEqual({
       kind: 'shotFired',
+      layer: 'enemy',
       weapon: 'right',
       x: 12,
       y: 34,
@@ -182,7 +283,7 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
     });
 
     for (let pushed = events.count; pushed < EVENT_QUEUE_CAPACITY + 5; pushed += 1) {
-      pushEvent(events, EventKind.ShotFired, WeaponName.Left, pushed, 2 * pushed, 0, -1);
+      pushEvent(events, EventKind.ShotFired, Layer.Player, WeaponName.Left, pushed, 2 * pushed, 0, -1);
     }
 
     expect(events.count).toBe(EVENT_QUEUE_CAPACITY);
@@ -232,13 +333,8 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
       ({ escort }) => escort.x === original.escort.x && escort.y === original.escort.y,
     );
     const lost = lostFrom(wake);
-    const spent = lost.filter(({ remainingSteps }) => remainingSteps === 0);
-    const stopped = lost.filter(({ remainingSteps }) => remainingSteps > 0).map(landing);
-    const pastTheSouthWall = stopped.filter(({ y }) => y > 540);
-    const pastTheEastWall = stopped.filter(({ x }) => x > 960);
-    const onTheCay = stopped.filter(
-      ({ x, y }) => x > 740 - 3 && x < 830 + 3 && y > 380 - 3 && y < 440 + 3,
-    );
+    const playerShots = lost.filter(({ layer }) => layer === Layer.PlayerShot);
+    const enemyShots = lost.filter(({ layer }) => layer === Layer.EnemyShot);
 
     expect(original.world.step).toBe(log.length);
     expect(new Set(wake.map(({ player }) => player.heading)).size).toBeGreaterThan(100);
@@ -256,16 +352,72 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
     expect(original.escort.y).toBeGreaterThanOrEqual(30);
     expect(original.escort.y).toBeLessThan(31);
     expect(original.wreck).toMatchObject({ active: false, x: -40, y: 200, thrust: 1 });
-    expect(volleys(wake, WeaponName.Front)).toEqual([96, 126, 156, 186, 216]);
-    expect(volleys(wake, WeaponName.Left)).toEqual([264, 324, 384, 444, 504]);
-    expect(volleys(wake, WeaponName.Right)).toEqual([264, 324, 384, 444, 504, 709]);
-    expect(wake[186]).toMatchObject({ fired: [{ weapon: 'front' }], flying: [] });
-    expect(pastTheSouthWall).toHaveLength(13);
-    expect(pastTheEastWall).toHaveLength(7);
-    expect(onTheCay).toHaveLength(5);
-    expect(stopped).toHaveLength(25);
-    expect(spent).toHaveLength(2);
-    expect(wake.at(-1)?.flying).toHaveLength(3);
+    expect(volleys(wake, Layer.Player, WeaponName.Front)).toEqual([96, 126, 156, 186, 216]);
+    expect(volleys(wake, Layer.Player, WeaponName.Left)).toEqual([264, 324, 384, 444, 504]);
+    expect(volleys(wake, Layer.Player, WeaponName.Right)).toEqual([264, 324, 384, 444, 504, 709]);
+    expect(wake[186]?.events).toMatchObject([
+      { kind: 'shotFired', layer: 'player', weapon: 'front' },
+    ]);
+    expect(wake[186]?.flying.filter(({ layer }) => layer === Layer.PlayerShot)).toEqual([]);
+    expect(blows(wake, Layer.Enemy)).toEqual([279, 281, 281, 748, 749, 751]);
+    expect(blows(wake, Layer.Player)).toEqual([192, 279, 419, 661, 746]);
+    expect(wake[0]).toMatchObject({
+      player: { health: 100 },
+      raider: { health: 30 },
+      gunboat: { health: 100 },
+      score: 0,
+    });
+    expect(changes(wake.map(({ raider }) => raider.health))).toEqual([
+      [279, 18],
+      [281, 0],
+    ]);
+    expect(changes(wake.map(({ gunboat }) => gunboat.health))).toEqual([
+      [748, 88],
+      [749, 76],
+      [751, 64],
+    ]);
+    expect(changes(wake.map(({ player }) => player.health))).toEqual([
+      [192, 80],
+      [279, 60],
+      [419, 50],
+      [661, 40],
+      [746, 30],
+    ]);
+    expect(changes(wake.map(({ score }) => score))).toEqual([[281, 1]]);
+    expect(wake[281]?.events).toMatchObject([
+      { kind: 'hit', layer: 'enemy' },
+      { kind: 'hit', layer: 'enemy' },
+      { kind: 'destroyed', layer: 'enemy', x: 658, y: 437 },
+    ]);
+    expect(original.raider).toStrictEqual(createShip());
+    expect(original.gunboat).toMatchObject({ active: true, layer: 'enemy', health: 64 });
+    expect(original.world.player).toMatchObject({ active: true, health: 30, maxHealth: 100 });
+    expect(original.world.score).toBe(1);
+    expect(volleys(wake, Layer.Enemy, WeaponName.Front)).toEqual([
+      0, 0, 90, 90, 180, 180, 270, 270, 360, 450, 540, 630, 720,
+    ]);
+    expect(volleys(wake, Layer.Enemy, WeaponName.Right)).toEqual([0, 180, 360, 540, 720]);
+    expect(fates(playerShots)).toEqual({
+      spent: 0,
+      onAShip: 6,
+      pastTheSouthWall: 13,
+      pastTheEastWall: 7,
+      onTheQuay: 0,
+      onTheCay: 4,
+      elsewhere: 0,
+    });
+    expect(fates(enemyShots)).toEqual({
+      spent: 4,
+      onAShip: 5,
+      pastTheSouthWall: 8,
+      pastTheEastWall: 0,
+      onTheQuay: 10,
+      onTheCay: 0,
+      elsewhere: 0,
+    });
+    expect(wake.at(-1)?.flying).toMatchObject([
+      { layer: 'enemyShot', x: 622, y: 184, remainingSteps: 36 },
+    ]);
 
     expect(replayedWake).toEqual(wake);
     expect(replayed.world).toStrictEqual(original.world);

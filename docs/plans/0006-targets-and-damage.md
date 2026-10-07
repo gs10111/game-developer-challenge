@@ -102,3 +102,17 @@ VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): CB-04, CB-05, EN-06, MT-02, PL-04, CB-08, FX-02 and FX-04 move to "In progress" in docs/requirements.md with "U" in their Test column, and the MT-02 row points to the damage stage; ARCHITECTURE.md gains layers, hits, damage and score; as-built lines go to ADR-0007 (a touching segment misses; a ship before an obstacle in the same step; hits against the ship's position at the end of the step; the shots of a destroyed enemy keep flying; several shots reaching a ship in one step are all spent) and ADR-0006 (the damage stage, what it releases and why it gives the score); the questions plan 0004 carried about the event shape and about the place of the projectile obstacles are closed.
 CARRIED TO LATER SLICES: the enemies slice adds enemy types with their config, the Chaser's contact damage through the `Player` with `Enemy` pair, and EN-03; the damage stage scores every enemy whose health it brings to zero, so the Chaser's self-destruction must not go through `pendingDamage` unless it carries its cause; the match slice ends the match when the player's health reaches zero and stops a destroyed player from acting; the renderer draws health bars from `health` and `maxHealth`, and impacts and explosions from the `hit` and `destroyed` events.
 ```
+
+## Outcome
+
+- Tests first: 29 new tests across the four subtasks, plus the 6 of plan 0005. Subtasks 3 and 4 were finished by a second implementer run after a usage limit cut the first; it confirmed the red of each of their tests by temporary edits, and checked the replay's numbers against an independent trace of all 66 shots.
+- Test audit, full mode, over plans 0005 and 0006: approved; 162 of 162 tests in two consecutive runs.
+- Review, rigorous mode, over both plans: approved with notes. No finding on spec, correctness, standards, ADRs, determinism or loop cost. The cost estimate is conservative: the layer test runs only for active slots.
+- The questions plan 0004 carried about the shape of events and about the place of the projectile obstacles are closed.
+
+Carried to later slices, in addition to the list above:
+
+- The two test harnesses repeat each other (`combatHarness.ts` and `weaponsHarness.ts`, and a few local helpers); one harness could serve all the step-level tests.
+- An enemy placed with zero health is never destroyed, and a negative or non-finite pending damage would stay on a ship; neither can happen in the game today. The enemies slice and the config schema must require positive health and finite, non-negative damage.
+- An enemy whose weapon is ready in the step a shot destroys it still fires in that step, because weapons run before the collision and damage stages.
+- That shots of a destroyed enemy still damage the player is an interpretation of the challenge, recorded in ARCHITECTURE.md; it is the owner's to confirm.

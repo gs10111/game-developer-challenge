@@ -4,7 +4,7 @@ import { createMatch } from '../createMatch';
 import { acquire } from '../pool';
 import { step } from '../step';
 import { STEPS_PER_SECOND } from '../stepRate';
-import { testWeapons } from '../testing/testWeapons';
+import { testPlayer } from '../testing/testPlayer';
 import { createProjectile } from '../world';
 import type { Projectile, World } from '../world';
 
@@ -26,7 +26,7 @@ const COURSES = [
 function buildConfig(islands: ConvexPolygon[] = []) {
   return {
     arena: { width: 2000, height: 2000, islands },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
+    player: testPlayer(),
   } satisfies GameConfig;
 }
 

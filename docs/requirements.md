@@ -13,7 +13,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | PL-01 | Move forward and rotate both ways, with speeds from the config | `sim/systems/movement` | T3, U | In progress |
 | PL-02 | Front cannon fires one projectile | `sim/systems/weapons` | T4, U | In progress |
 | PL-03 | Broadside fires three parallel projectiles, with separate left and right commands | `sim/systems/weapons` | T4, U | In progress |
-| PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/damage` | T4, T5 | Pending |
+| PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/damage` | T4, T5, U | In progress |
 | PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3, U | In progress |
 | PL-06 | Cannot cross islands | `sim/systems/collision` | T3, U | In progress |
 | PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | Pending |
@@ -27,10 +27,10 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | --- | --- | --- | --- | --- |
 | EN-01 | Chaser pursues the player | `sim/ai/chaser` | T5 | Pending |
 | EN-02 | Chaser damages the player on contact and explodes on impact | `sim/systems/damage` | T5 | Pending |
-| EN-03 | A Chaser destroying itself on the player scores no point | `sim/systems/score` | T4, T5 | Pending |
+| EN-03 | A Chaser destroying itself on the player scores no point | `sim/systems/damage` | T4, T5 | Pending |
 | EN-04 | Shooter approaches and fires only within the configured attack range | `sim/ai/shooter` | T5 | Pending |
 | EN-05 | Enemies move and rotate with limited turn speed | `sim/systems/movement` | T5 | Pending |
-| EN-06 | Enemies take damage and have their own health | `sim/systems/damage` | T4 | Pending |
+| EN-06 | Enemies take damage and have their own health | `sim/systems/damage` | T4, U | In progress |
 | EN-07 | Enemies respect island collision and steer around islands | `sim/ai/steering`, `sim/systems/collision` | T5 | Pending |
 | EN-08 | Both enemy types appear in a default match (mix in the config) | `sim/systems/spawner`, `config` | T5 | Pending |
 | EN-09 | Spawn at the configured interval until the match ends | `sim/systems/spawner` | T5 | Pending |
@@ -44,18 +44,18 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | CB-01 | Arena with water and at least one island | `config/gameConfig.ts`, `sim/collision`, `render/arena` | T3, U, visual | In progress |
 | CB-02 | Islands block ships and projectiles | `sim/systems/collision` | T3, T4, U | In progress |
 | CB-03 | Projectiles follow configured direction, speed, damage and range or lifetime | `sim/systems/projectiles`, `sim/systems/weapons` | T4, U | In progress |
-| CB-04 | Player shots hit only enemies; enemy shots hit only the player | `sim/systems/collision` (layers) | T4, T5 | Pending |
-| CB-05 | Each projectile applies damage only once | `sim/systems/damage` | T4 | Pending |
+| CB-04 | Player shots hit only enemies; enemy shots hit only the player | `sim/collision/layers`, `sim/systems/collision` | T4, T5, U | In progress |
+| CB-05 | Each projectile applies damage only once | `sim/systems/collision` (hits), `sim/systems/damage` | T4, U | In progress |
 | CB-06 | Projectile removed on hit, on expiry or when leaving the arena | `sim/systems/projectiles`, `sim/systems/collision` | T4, U | In progress |
 | CB-07 | Each weapon respects its own cooldown | `sim/systems/weapons` | T4, U | In progress |
-| CB-08 | A destroyed enemy stops damaging, firing and colliding in the same step | `sim/world` | T4, T5 | Pending |
+| CB-08 | A destroyed enemy stops damaging, firing and colliding in the same step: it is inactive from the end of the step that destroys it | `sim/systems/damage` | T4, T5, U | In progress |
 
 ## Match rules, HUD and pause (Challenge 2)
 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
 | MT-01 | Configurable duration between 60 and 180 s of active play | `config`, `sim/clock` | T1, T6 | Pending |
-| MT-02 | Each enemy destroyed by the player is worth 1 point | `sim/systems/score` | T4 | Pending |
+| MT-02 | Each enemy destroyed by the player is worth 1 point | `sim/systems/damage` | T4, U | In progress |
 | MT-03 | Match ends when time runs out or health reaches zero, with the reason recorded | `sim/match` | T6 | Pending |
 | MT-04 | Ending stops movement, attacks, damage, spawns and scoring | `sim/match` | T6 | Pending |
 | MT-05 | Restart creates a fresh match: health, score, timer and entities reset | `sim/createMatch` | T6, U | In progress |
@@ -72,9 +72,9 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
 | FX-01 | Visual effect when firing | `render/fx`, `sim/events` (the shot event) | visual, U | In progress |
-| FX-02 | Explosion on destruction | `render/fx` | T5 | Pending |
+| FX-02 | Explosion on destruction | `render/fx`, `sim/events` (the destroyed event) | T5, U | In progress |
 | FX-03 | Ships show damage states by health band | `render/ships` | T4, visual | Pending |
-| FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/fx` | T4 | Pending |
+| FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/fx`, `sim/events` (the hit event) | T4, U | In progress |
 | FX-05 | Effects are short and do not hide ships or projectiles | `render` | manual | Pending |
 | FX-06 | Extra: firing, explosion and ambient sounds with a mute control | `audio` | manual | Pending |
 

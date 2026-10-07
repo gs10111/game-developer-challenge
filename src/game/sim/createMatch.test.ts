@@ -1,19 +1,20 @@
 import { describe, expect, test } from 'vitest';
 import type { GameConfig } from '../config/gameConfig';
 import { createIslandIndex } from './collision/islandIndex';
+import { Layer } from './collision/layers';
 import { createMatch } from './createMatch';
 import { createEventQueue, EventKind, pushEvent, WeaponName } from './events';
 import { EVENT_QUEUE_CAPACITY, PROJECTILE_POOL_CAPACITY, SHIP_POOL_CAPACITY } from './limits';
 import { acquire } from './pool';
 import { createRandomSource, nextRandom } from './random';
 import type { RandomSource } from './random';
-import { testWeapons } from './testing/testWeapons';
+import { testPlayer } from './testing/testPlayer';
 import { createProjectile, createShip } from './world';
 
 function buildConfig() {
   return {
     arena: { width: 960, height: 540, islands: [] },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
+    player: testPlayer(),
   } satisfies GameConfig;
 }
 
@@ -36,7 +37,7 @@ function buildArchipelago() {
         ],
       ],
     },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
+    player: testPlayer(),
   } satisfies GameConfig;
 }
 
@@ -123,6 +124,27 @@ describe('match creation (ADR-0006)', () => {
       front: { ...configured.front, projectileSpeed: 300 },
       broadside: { ...configured.broadside, spacing: 16 },
     });
+  });
+
+  test("SC-10 the player's health is the one of the config the match was created with", () => {
+    const standard = buildConfig();
+    const frail = buildConfig();
+    frail.player.health = 35;
+    const sturdy = buildConfig();
+    sturdy.player.health = 250.5;
+
+    expect(createMatch(standard, 1).player).toMatchObject({ health: 100, maxHealth: 100 });
+    expect(createMatch(frail, 1).player).toMatchObject({ health: 35, maxHealth: 35 });
+    expect(createMatch(sturdy, 1).player).toMatchObject({ health: 250.5, maxHealth: 250.5 });
+
+    const running = createMatch(frail, 1);
+    frail.player.health = 60;
+    const next = createMatch(frail, 1);
+
+    expect(running.config.player.health).toBe(35);
+    expect(running.player).toMatchObject({ health: 35, maxHealth: 35 });
+    expect(next.config.player.health).toBe(60);
+    expect(next.player).toMatchObject({ health: 60, maxHealth: 60 });
   });
 
   test('SC-12 a running match keeps its config when the source changes afterwards, nested fields included, and the next match uses the new values', () => {
@@ -318,13 +340,48 @@ describe('match creation (ADR-0006)', () => {
     expect(previous.player).toMatchObject(spent);
   });
 
+  test('MT-05 a fresh match has the player at full health on the player layer and a score of zero', () => {
+    const config = buildConfig();
+    const previous = createMatch(config, 7);
+    const battered = { layer: Layer.Enemy, health: 12, maxHealth: 40, pendingDamage: 30 } as const;
+    Object.assign(previous.player, battered);
+    previous.score = 9;
+
+    const next = createMatch(config, 7);
+
+    expect(next.score).toBe(0);
+    expect(next.player).toMatchObject({
+      layer: 'player',
+      health: 100,
+      maxHealth: 100,
+      pendingDamage: 0,
+    });
+    for (const ship of next.ships.slots.slice(1)) {
+      expect(ship).toMatchObject({ layer: null, health: 0, maxHealth: 0, pendingDamage: 0 });
+    }
+    expect(previous.score).toBe(9);
+    expect(previous.player).toMatchObject(battered);
+
+    const frail = buildConfig();
+    frail.player.health = 35;
+    const afterTheChange = createMatch(frail, 7);
+
+    expect(afterTheChange.score).toBe(0);
+    expect(afterTheChange.player).toMatchObject({
+      layer: 'player',
+      health: 35,
+      maxHealth: 35,
+      pendingDamage: 0,
+    });
+  });
+
   test('MT-05 a fresh match has no active projectile and no event', () => {
     const config = buildConfig();
     const previous = createMatch(config, 7);
     acquire(previous.projectiles);
     acquire(previous.projectiles);
-    pushEvent(previous.events, EventKind.ShotFired, WeaponName.Left, 300, 120, 0, -1);
-    pushEvent(previous.events, EventKind.ShotFired, WeaponName.Right, 310, 130, 0, 1);
+    pushEvent(previous.events, EventKind.ShotFired, Layer.Player, WeaponName.Left, 300, 120, 0, -1);
+    pushEvent(previous.events, EventKind.ShotFired, Layer.Enemy, WeaponName.Right, 310, 130, 0, 1);
 
     const next = createMatch(config, 7);
     const previousParts = reachableObjects(previous);

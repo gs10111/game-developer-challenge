@@ -61,3 +61,8 @@ ORDER: 1 → 2, sequential.
 VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): recorded together with plan 0006.
 ```
+
+## Outcome
+
+- Implemented in one run: 6 new tests, and the existing tests carried onto the `testPlayer()` fixture and the new fields. The test audit confirmed, line by line on the diff, that every existing assertion only gained fields or arguments and that none was removed or loosened.
+- Audited and reviewed together with plan 0006; the results are in that plan's Outcome.

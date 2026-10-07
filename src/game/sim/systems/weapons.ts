@@ -1,4 +1,6 @@
 import type { Weapon, Weapons } from '../../config/gameConfig';
+import { shotLayerOf } from '../collision/layers';
+import type { Layer } from '../collision/layers';
 import { EventKind, pushEvent, WeaponName } from '../events';
 import { cosine, sine } from '../math/rotation';
 import { acquire } from '../pool';
@@ -19,6 +21,7 @@ function cooled(cooldown: number): number {
 function launch(
   world: World,
   weapon: Weapon,
+  layer: Layer | null,
   x: number,
   y: number,
   directionX: number,
@@ -28,6 +31,7 @@ function launch(
   if (projectile === null) {
     return false;
   }
+  projectile.layer = layer;
   projectile.x = x;
   projectile.y = y;
   projectile.previousX = x;
@@ -45,8 +49,17 @@ function fireFront(world: World, ship: Ship, weapon: Weapon, aheadX: number, ahe
   const muzzle = ship.radius + weapon.projectileRadius;
   const x = ship.x + aheadX * muzzle;
   const y = ship.y + aheadY * muzzle;
-  if (launch(world, weapon, x, y, aheadX, aheadY)) {
-    pushEvent(world.events, EventKind.ShotFired, WeaponName.Front, x, y, aheadX, aheadY);
+  if (launch(world, weapon, shotLayerOf(ship.layer), x, y, aheadX, aheadY)) {
+    pushEvent(
+      world.events,
+      EventKind.ShotFired,
+      ship.layer,
+      WeaponName.Front,
+      x,
+      y,
+      aheadX,
+      aheadY,
+    );
   }
 }
 
@@ -63,15 +76,16 @@ function fireBroadside(
   const muzzle = ship.radius + weapon.projectileRadius;
   const x = ship.x + sideX * muzzle;
   const y = ship.y + sideY * muzzle;
+  const layer = shotLayerOf(ship.layer);
   let launched = false;
   for (let index = 0; index < BROADSIDE_PROJECTILES; index += 1) {
     const along = (index - BROADSIDE_MIDDLE) * weapon.spacing;
-    if (launch(world, weapon, x + aheadX * along, y + aheadY * along, sideX, sideY)) {
+    if (launch(world, weapon, layer, x + aheadX * along, y + aheadY * along, sideX, sideY)) {
       launched = true;
     }
   }
   if (launched) {
-    pushEvent(world.events, EventKind.ShotFired, name, x, y, sideX, sideY);
+    pushEvent(world.events, EventKind.ShotFired, ship.layer, name, x, y, sideX, sideY);
   }
 }
 

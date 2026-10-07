@@ -4,7 +4,7 @@ import { createMatch } from '../../createMatch';
 import { PROJECTILE_POOL_CAPACITY } from '../../limits';
 import { acquire } from '../../pool';
 import { step } from '../../step';
-import { testWeapons } from '../../testing/testWeapons';
+import { testPlayer } from '../../testing/testPlayer';
 import { createProjectile } from '../../world';
 import type { Projectile, World } from '../../world';
 
@@ -25,7 +25,7 @@ function rectangle(left: number, top: number, right: number, bottom: number): Po
 function buildConfig(width: number, height: number, islands: ConvexPolygon[] = []) {
   return {
     arena: { width, height, islands },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
+    player: testPlayer(),
   } satisfies GameConfig;
 }
 
@@ -282,6 +282,8 @@ describe('projectile obstacles (ADR-0007)', () => {
     expect(next).toBe(overboard);
     expect(next).toStrictEqual({
       active: true,
+      layer: null,
+      consumed: false,
       x: 400,
       y: 100,
       previousX: 400,

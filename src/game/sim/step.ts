@@ -2,7 +2,9 @@ import { STEP_SECONDS } from './stepRate';
 import { arenaBounds } from './systems/collision/arenaBounds';
 import { blockedShips } from './systems/collision/blockedShips';
 import { islandCollision } from './systems/collision/islandCollision';
+import { projectileHits } from './systems/collision/projectileHits';
 import { projectileObstacles } from './systems/collision/projectileObstacles';
+import { damage } from './systems/damage';
 import { movement } from './systems/movement';
 import { playerIntent } from './systems/playerIntent';
 import { projectiles } from './systems/projectiles';
@@ -15,6 +17,7 @@ function collision(world: World): void {
   islandCollision(world);
   arenaBounds(world);
   blockedShips(world);
+  projectileHits(world);
   projectileObstacles(world);
 }
 
@@ -23,6 +26,7 @@ const movementStage: System = movement;
 const weaponsStage: System = weapons;
 const projectilesStage: System = projectiles;
 const collisionStage: System = collision;
+const damageStage: System = damage;
 
 export function step(world: World, commands: number): void {
   world.commands = commands;
@@ -32,5 +36,6 @@ export function step(world: World, commands: number): void {
   weaponsStage(world, STEP_SECONDS);
   projectilesStage(world, STEP_SECONDS);
   collisionStage(world, STEP_SECONDS);
+  damageStage(world, STEP_SECONDS);
   world.step += 1;
 }

@@ -6,8 +6,8 @@ This document describes the system as it is built, and grows with each slice. Th
 
 | Layer | Path | Role | Built so far |
 | --- | --- | --- | --- |
-| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement and weapons |
-| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds |
+| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement, health and weapons |
+| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds, layers, hits, damage and score |
 | Loop | `src/game/loop` | Timing that drives the simulation | Fixed-step clock |
 | Render | `src/game/render` | PixiJS scene | Not yet |
 | Input | `src/game/input` | Keyboard and touch, sampled once per step | Not yet |
@@ -30,10 +30,11 @@ The continuous state of a match lives in one mutable `World` ([ADR-0006](docs/ad
 | `ships`, `player` | The ship pool and the player's slot in it |
 | `projectiles` | The projectile pool |
 | `events` | What happened in the last step, for the renderer and the sound |
+| `score` | Enemies destroyed by the player |
 
 `createMatch(config, seed)` copies and freezes the config, so later changes to the options reach only the next match. It builds the island index and the pool, and places the player at the centre of the arena.
 
-`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask, empties the event queue and runs the systems in a fixed order: player intent, movement, weapons, projectiles, and the collision stage (island collision, arena bounds, blocked ships, projectile obstacles). Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
+`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask, empties the event queue and runs the systems in a fixed order: player intent, movement, weapons, projectiles, the collision stage (island collision, arena bounds, blocked ships, projectile hits, projectile obstacles) and the damage stage. Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
 
 Pools have a fixed capacity, reset a slot in place when it is acquired or released, and are scanned by slot index. The step allocates nothing.
 
@@ -62,7 +63,21 @@ The front cannon fires one projectile from the bow along the heading. A broadsid
 
 ### Events
 
-The simulation reports what happened in a step through a queue of pre-allocated events, emptied when the next step starts. Today it carries one kind, a shot, with the weapon, the muzzle position and the direction. The simulation never reads the queue back. The loop driver will have to hand it to the renderer and the sound after every step, not once per frame: at 30 frames per second a frame runs two steps, and at 144 some frames run none.
+The simulation reports what happened in a step through a queue of pre-allocated events, emptied when the next step starts. It carries three kinds: a shot, with the layer of the ship that fired, the weapon, the muzzle position and the direction; a hit, with the layer of the ship that was hit, the point of impact and the direction of the projectile; and a destruction, with the ship's layer and position. The simulation never reads the queue back. The loop driver will have to hand it to the renderer and the sound after every step, not once per frame: at 30 frames per second a frame runs two steps, and at 144 some frames run none.
+
+### Hits, damage and score
+
+Ships and projectiles carry a layer: player, enemy, player shot or enemy shot. A pair matrix says which layers meet, so a player's shot is tested only against enemies and an enemy's shot only against the player ([ADR-0007](docs/adr/0007-collision-strategy.md)).
+
+A hit is found with a swept test: the segment from where the projectile was to where it is, against a circle of the ship's radius plus the projectile's, so a fast projectile cannot jump over a ship. The nearest ship on the path takes the damage. The projectile is marked as spent and its damage is banked on the ship; nothing else happens until the damage stage.
+
+The damage stage takes the banked damage from each ship's health. An enemy that reaches zero is worth one point and leaves the match at once; the player stays at zero health until the match rules, still to come, end the match. Then every spent projectile is removed. Each projectile therefore applies its damage once and is gone in the step it hits.
+
+Three choices are worth stating:
+
+- An enemy is inactive from the end of the step that destroys it. Shots it had already fired keep flying and can still hit the player. The challenge says destroyed enemies stop causing damage, firing and colliding; this is read as being about the enemy itself, and its list of reasons for a projectile to disappear does not include the death of whoever fired it.
+- Several shots that reach one ship in the same step are all spent, even when the first would have destroyed it, as with the three shots of a broadside.
+- A ship on a projectile's path wins over an island or a wall at the end of that path in the same step.
 
 ### Islands and collision
 
@@ -97,6 +112,6 @@ There is no backend. The MSW service worker starts before the first render in ev
 
 - The arena size, the island layout, the player's start position and the movement values are provisional until the arena is drawn and the game is balanced.
 - Island polygons, speeds and weapon values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, or a non-positive cooldown would not be caught.
-- Projectiles hit nothing but islands and walls yet: targets, sides and damage come with the next slice.
+- Enemies exist only as ships that tests place by hand: enemy types, their steering and their spawning come next, and nothing ends the match yet.
 - A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
 - Nothing is rendered yet: the rules above are exercised by unit tests only.
