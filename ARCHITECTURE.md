@@ -6,8 +6,8 @@ This document describes the system as it is built, and grows with each slice. Th
 
 | Layer | Path | Role | Built so far |
 | --- | --- | --- | --- |
-| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands and player movement |
-| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pool, PRNG, rotation, commands, movement, islands, collision with islands and arena bounds |
+| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement and weapons |
+| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds |
 | Loop | `src/game/loop` | Timing that drives the simulation | Fixed-step clock |
 | Render | `src/game/render` | PixiJS scene | Not yet |
 | Input | `src/game/input` | Keyboard and touch, sampled once per step | Not yet |
@@ -28,10 +28,12 @@ The continuous state of a match lives in one mutable `World` ([ADR-0006](docs/ad
 | `config` | A deep-frozen copy of the config, taken when the match is created |
 | `islands` | The island parts with their edge normals and bounding boxes, and the grid that finds the parts near a ship |
 | `ships`, `player` | The ship pool and the player's slot in it |
+| `projectiles` | The projectile pool |
+| `events` | What happened in the last step, for the renderer and the sound |
 
 `createMatch(config, seed)` copies and freezes the config, so later changes to the options reach only the next match. It builds the island index and the pool, and places the player at the centre of the arena.
 
-`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask and runs the systems in a fixed order: player intent, movement, and the collision stage (island collision, arena bounds, blocked ships). Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
+`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask, empties the event queue and runs the systems in a fixed order: player intent, movement, weapons, projectiles, and the collision stage (island collision, arena bounds, blocked ships, projectile obstacles). Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
 
 Pools have a fixed capacity, reset a slot in place when it is acquired or released, and are scanned by slot index. The step allocates nothing.
 
@@ -49,6 +51,18 @@ The rounding rule and the turn-then-move order are part of the replay format: ch
 ### Movement
 
 The player moves forward at the configured speed while the forward command is held and turns at the configured rate whether or not it is moving. There is no acceleration and no inertia. Before a ship moves, movement records where it was.
+
+### Weapons and projectiles
+
+A ship carries its weapons, three fire intents and three cooldowns. The player's intents come from the command mask each step, so moving, turning and firing combine freely. Weapon parameters live in the config: cooldown, projectile speed, radius, lifetime and damage for the front cannon and for the broadside, plus the spacing between the broadside's three projectiles.
+
+Cooldowns and lifetimes are whole numbers of steps, never accumulated time, which keeps them exact and suspends them for free when the simulation is paused. Each step a weapon's cooldown drops by one; when it is zero and the command is set, the weapon fires and the cooldown starts again. A held command therefore fires on the first step and then exactly once per cooldown, and the front cannon and each broadside count on their own.
+
+The front cannon fires one projectile from the bow along the heading. A broadside fires three parallel projectiles from one side of the hull, perpendicular to the heading. A projectile moves in the step it is fired, travels in a straight line at its speed, and is removed in the step after its last move, so its range is exactly its speed times its lifetime. It is also removed when its centre crosses a wall of the arena or its circle overlaps an island.
+
+### Events
+
+The simulation reports what happened in a step through a queue of pre-allocated events, emptied when the next step starts. Today it carries one kind, a shot, with the weapon, the muzzle position and the direction. The simulation never reads the queue back. The loop driver will have to hand it to the renderer and the sound after every step, not once per frame: at 30 frames per second a frame runs two steps, and at 144 some frames run none.
 
 ### Islands and collision
 
@@ -82,6 +96,7 @@ There is no backend. The MSW service worker starts before the first render in ev
 ## Current limitations
 
 - The arena size, the island layout, the player's start position and the movement values are provisional until the arena is drawn and the game is balanced.
-- Island polygons and the configured speed are not validated: a malformed part or a ship fast enough to cross an island in one step would not be caught.
+- Island polygons, speeds and weapon values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, or a non-positive cooldown would not be caught.
+- Projectiles hit nothing but islands and walls yet: targets, sides and damage come with the next slice.
 - A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
 - Nothing is rendered yet: the rules above are exercised by unit tests only.

@@ -11,14 +11,14 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
 | PL-01 | Move forward and rotate both ways, with speeds from the config | `sim/systems/movement` | T3, U | In progress |
-| PL-02 | Front cannon fires one projectile | `sim/systems/weapons` | T4 | Pending |
-| PL-03 | Broadside fires three parallel projectiles, with separate left and right commands | `sim/systems/weapons` | T4 | Pending |
+| PL-02 | Front cannon fires one projectile | `sim/systems/weapons` | T4, U | In progress |
+| PL-03 | Broadside fires three parallel projectiles, with separate left and right commands | `sim/systems/weapons` | T4, U | In progress |
 | PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/damage` | T4, T5 | Pending |
 | PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3, U | In progress |
 | PL-06 | Cannot cross islands | `sim/systems/collision` | T3, U | In progress |
 | PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | Pending |
 | PL-08 | Touch controls for the same commands | `input/touch`, `ui/TouchControls` | T9 | Pending |
-| PL-09 | Move and fire at the same time | `input` (per-step command state) | T4 | Pending |
+| PL-09 | Move and fire at the same time | `input` (per-step command state), `sim/systems/playerIntent` | T4, U | In progress |
 | PL-10 | Controls shown in the interface (menu and match) | `ui/ControlsHelp` | T1 | Pending |
 
 ## Enemies and spawning (Challenge 2)
@@ -43,11 +43,11 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | --- | --- | --- | --- | --- |
 | CB-01 | Arena with water and at least one island | `config/gameConfig.ts`, `sim/collision`, `render/arena` | T3, U, visual | In progress |
 | CB-02 | Islands block ships and projectiles | `sim/systems/collision` | T3, T4, U | In progress |
-| CB-03 | Projectiles follow configured direction, speed, damage and range or lifetime | `sim/systems/projectiles` | T4 | Pending |
+| CB-03 | Projectiles follow configured direction, speed, damage and range or lifetime | `sim/systems/projectiles`, `sim/systems/weapons` | T4, U | In progress |
 | CB-04 | Player shots hit only enemies; enemy shots hit only the player | `sim/systems/collision` (layers) | T4, T5 | Pending |
 | CB-05 | Each projectile applies damage only once | `sim/systems/damage` | T4 | Pending |
-| CB-06 | Projectile removed on hit, on expiry or when leaving the arena | `sim/systems/projectiles` | T4 | Pending |
-| CB-07 | Each weapon respects its own cooldown | `sim/systems/weapons` | T4 | Pending |
+| CB-06 | Projectile removed on hit, on expiry or when leaving the arena | `sim/systems/projectiles`, `sim/systems/collision` | T4, U | In progress |
+| CB-07 | Each weapon respects its own cooldown | `sim/systems/weapons` | T4, U | In progress |
 | CB-08 | A destroyed enemy stops damaging, firing and colliding in the same step | `sim/world` | T4, T5 | Pending |
 
 ## Match rules, HUD and pause (Challenge 2)
@@ -71,7 +71,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
-| FX-01 | Visual effect when firing | `render/fx` | visual | Pending |
+| FX-01 | Visual effect when firing | `render/fx`, `sim/events` (the shot event) | visual, U | In progress |
 | FX-02 | Explosion on destruction | `render/fx` | T5 | Pending |
 | FX-03 | Ships show damage states by health band | `render/ships` | T4, visual | Pending |
 | FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/fx` | T4 | Pending |

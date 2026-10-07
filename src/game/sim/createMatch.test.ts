@@ -2,16 +2,18 @@ import { describe, expect, test } from 'vitest';
 import type { GameConfig } from '../config/gameConfig';
 import { createIslandIndex } from './collision/islandIndex';
 import { createMatch } from './createMatch';
-import { SHIP_POOL_CAPACITY } from './limits';
+import { createEventQueue, EventKind, pushEvent, WeaponName } from './events';
+import { EVENT_QUEUE_CAPACITY, PROJECTILE_POOL_CAPACITY, SHIP_POOL_CAPACITY } from './limits';
 import { acquire } from './pool';
 import { createRandomSource, nextRandom } from './random';
 import type { RandomSource } from './random';
-import { createShip } from './world';
+import { testWeapons } from './testing/testWeapons';
+import { createProjectile, createShip } from './world';
 
 function buildConfig() {
   return {
     arena: { width: 960, height: 540, islands: [] },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150 },
+    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
   } satisfies GameConfig;
 }
 
@@ -34,7 +36,7 @@ function buildArchipelago() {
         ],
       ],
     },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150 },
+    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
   } satisfies GameConfig;
 }
 
@@ -72,6 +74,55 @@ describe('match creation (ADR-0006)', () => {
     });
     expect(createMatch(small, 1).player).toMatchObject({ radius: 10, speed: 75.5, turnRate: 128 });
     expect(createMatch(nimble, 1).player).toMatchObject({ radius: 31, speed: 300, turnRate: 256 });
+  });
+
+  test("SC-10 the player's weapons are the ones of the config the match was created with", () => {
+    const source = buildConfig();
+    source.player.weapons.front.projectileSpeed = 512;
+    source.player.weapons.broadside.spacing = 9.5;
+    const configured = {
+      front: {
+        cooldownSeconds: 0.5,
+        projectileSpeed: 512,
+        projectileRadius: 4,
+        projectileLifetimeSeconds: 2,
+        damage: 20,
+      },
+      broadside: {
+        cooldownSeconds: 1,
+        projectileSpeed: 240,
+        projectileRadius: 3,
+        projectileLifetimeSeconds: 1.5,
+        damage: 12,
+        spacing: 9.5,
+      },
+    };
+
+    const world = createMatch(source, 1);
+    const weaponParts = [...reachableObjects(world.player.weapons)];
+    const sourceParts = reachableObjects(source);
+
+    expect(world.player.weapons).toBe(world.config.player.weapons);
+    expect(world.player.weapons).not.toBe(source.player.weapons);
+    expect(world.player.weapons).toStrictEqual(configured);
+    expect(weaponParts).toHaveLength(3);
+    expect(weaponParts.filter((part) => sourceParts.has(part))).toEqual([]);
+    expect(weaponParts.filter((part) => !Object.isFrozen(part))).toEqual([]);
+
+    source.player.weapons.front.damage = 99;
+    source.player.weapons.broadside.cooldownSeconds = 7;
+    const next = createMatch(source, 1);
+
+    expect(world.player.weapons).toStrictEqual(configured);
+    expect(next.player.weapons).toBe(next.config.player.weapons);
+    expect(next.player.weapons).toStrictEqual({
+      front: { ...configured.front, damage: 99 },
+      broadside: { ...configured.broadside, cooldownSeconds: 7 },
+    });
+    expect(createMatch(buildConfig(), 1).player.weapons).toStrictEqual({
+      front: { ...configured.front, projectileSpeed: 300 },
+      broadside: { ...configured.broadside, spacing: 16 },
+    });
   });
 
   test('SC-12 a running match keeps its config when the source changes afterwards, nested fields included, and the next match uses the new values', () => {
@@ -133,7 +184,7 @@ describe('match creation (ADR-0006)', () => {
         expect(snapshotParts).toContain(vertex);
       }
     }
-    expect(snapshotParts).toHaveLength(13);
+    expect(snapshotParts).toHaveLength(16);
     expect(snapshotParts.filter((part) => sourceParts.has(part))).toEqual([]);
     expect(snapshotParts.filter((part) => !Object.isFrozen(part))).toEqual([]);
 
@@ -233,6 +284,69 @@ describe('match creation (ADR-0006)', () => {
     wide.arena.height = 400;
 
     expect(createMatch(wide, 7).player).toMatchObject({ x: 600, y: 200, heading: 0 });
+  });
+
+  test('MT-05 the player of a fresh match has its weapons ready and no fire intent', () => {
+    const config = buildConfig();
+    const previous = createMatch(config, 7);
+    const spent = {
+      fireFront: 1,
+      fireLeft: 1,
+      fireRight: 1,
+      frontCooldown: 17,
+      leftCooldown: 42,
+      rightCooldown: 59,
+    } as const;
+    const ready = {
+      fireFront: 0,
+      fireLeft: 0,
+      fireRight: 0,
+      frontCooldown: 0,
+      leftCooldown: 0,
+      rightCooldown: 0,
+    };
+    Object.assign(previous.player, spent);
+
+    const next = createMatch(config, 7);
+
+    expect(next.player).toMatchObject(ready);
+    expect(next.player.weapons).toBe(next.config.player.weapons);
+    expect(next.player.weapons).not.toBe(previous.player.weapons);
+    for (const ship of next.ships.slots.slice(1)) {
+      expect(ship).toMatchObject({ ...ready, weapons: null });
+    }
+    expect(previous.player).toMatchObject(spent);
+  });
+
+  test('MT-05 a fresh match has no active projectile and no event', () => {
+    const config = buildConfig();
+    const previous = createMatch(config, 7);
+    acquire(previous.projectiles);
+    acquire(previous.projectiles);
+    pushEvent(previous.events, EventKind.ShotFired, WeaponName.Left, 300, 120, 0, -1);
+    pushEvent(previous.events, EventKind.ShotFired, WeaponName.Right, 310, 130, 0, 1);
+
+    const next = createMatch(config, 7);
+    const previousParts = reachableObjects(previous);
+    const nextParts = [...reachableObjects(next)];
+
+    expect(previous.projectiles.slots.filter(({ active }) => active)).toHaveLength(2);
+    expect(previous.events.count).toBe(2);
+
+    expect(PROJECTILE_POOL_CAPACITY).toBe(256);
+    expect(next.projectiles.slots).toHaveLength(PROJECTILE_POOL_CAPACITY);
+    expect(new Set(next.projectiles.slots).size).toBe(PROJECTILE_POOL_CAPACITY);
+    expect(next.projectiles.slots.filter(({ active }) => active)).toEqual([]);
+    for (const projectile of next.projectiles.slots) {
+      expect(projectile).toStrictEqual(createProjectile());
+    }
+    expect(next.events.count).toBe(0);
+    expect(next.events.items).toHaveLength(EVENT_QUEUE_CAPACITY);
+    expect(new Set(next.events.items).size).toBe(EVENT_QUEUE_CAPACITY);
+    expect(next.events).toStrictEqual(createEventQueue(EVENT_QUEUE_CAPACITY));
+    expect(nextParts).toContain(next.projectiles.slots);
+    expect(nextParts).toContain(next.events.items);
+    expect(nextParts.filter((part) => previousParts.has(part))).toEqual([]);
   });
 
   test("MT-05 each match builds its own island index, and the player's previous position starts at its position", () => {

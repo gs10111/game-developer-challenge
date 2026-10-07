@@ -44,6 +44,7 @@ export function mulberry32(seed: number): () => number {
 - Harder: every gameplay change invalidates stored replays, so records carry a simulation version and old versions are flagged instead of replayed.
 - As built: the PRNG runs the same mulberry32 arithmetic, with its state in a holder inside the world instead of a closure, so that a snapshot of the world captures it.
 - As built: a heading reads the nearest table entry (round, then wrap), and within a step a ship turns first and then moves along the new heading. Both are part of the replay format: changing either invalidates stored replays.
+- As built: cooldowns and projectile lifetimes are whole numbers of steps (seconds times 60, rounded to the nearest step, at least one). A weapon fires in the step its cooldown reaches zero with its command set, the front cannon before the left broadside before the right, and a projectile moves in the step it is fired. All of this is part of the replay format.
 - Revisit: if quantized rotation feels coarse, raise the resolution (1/1024 of a turn) and regenerate the table.
 
 ## Sources

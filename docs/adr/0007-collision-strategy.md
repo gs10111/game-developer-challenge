@@ -35,6 +35,7 @@ Ships must not cross islands or leave the arena; projectiles hit only the opposi
 - Easier: collision code stays small and fully unit-testable.
 - Harder: concave island outlines need a one-time convex decomposition.
 - As built, for ships against islands: the response pushes the ship out of the deepest overlap first, for up to three rounds per step, so that the buried corner where two parts meet flush cannot push it back along the shore. The arena clamp runs next. A ship that still overlaps an island by more than 1e-9 after both returns to where it was before the step, which settles notches narrower than the hull. The grid lists a part in every cell from the one holding its lowest corner to the one holding its highest.
+- As built, for projectiles against islands and walls: a projectile is tested where it ends each step, with no tolerance, and is removed when its circle overlaps an island part or its centre crosses a wall. There is no swept test against islands: a projectile moves a few units per step, far less than any island part.
 - Revisit: only if the configured or measured load exceeds the average case by an order of magnitude (ADR-0015).
 
 ## Sources

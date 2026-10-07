@@ -2,9 +2,14 @@ import { describe, expect, test } from 'vitest';
 import type { GameConfig, Point } from '../config/gameConfig';
 import { Command } from './commands';
 import { createMatch } from './createMatch';
+import { EventKind, pushEvent, WeaponName } from './events';
+import type { GameEvent } from './events';
+import { EVENT_QUEUE_CAPACITY } from './limits';
 import { acquire } from './pool';
 import { step } from './step';
-import type { Ship, World } from './world';
+import { STEPS_PER_SECOND } from './stepRate';
+import { testWeapons } from './testing/testWeapons';
+import type { Projectile, Ship, World } from './world';
 
 const SEED = 20261007;
 const STEPS_OF_THE_LONGEST_MATCH = 10800;
@@ -28,9 +33,15 @@ interface Fleet {
   wreck: Ship;
 }
 
+interface Shot extends Projectile {
+  berth: number;
+}
+
 interface Sighting {
   player: Ship;
   escort: Ship;
+  fired: GameEvent[];
+  flying: Shot[];
 }
 
 function rectangle(left: number, top: number, right: number, bottom: number): Point[] {
@@ -57,7 +68,7 @@ function buildConfig() {
         ],
       ],
     },
-    player: { radius: 24, speed: 140, turnRateDegrees: 150 },
+    player: { radius: 24, speed: 140, turnRateDegrees: 150, weapons: testWeapons() },
   } satisfies GameConfig;
 }
 
@@ -85,7 +96,35 @@ function createFleet(): Fleet {
 }
 
 function sight(fleet: Fleet): Sighting {
-  return { player: { ...fleet.world.player }, escort: { ...fleet.escort } };
+  const { player, events, projectiles } = fleet.world;
+  return {
+    player: { ...player },
+    escort: { ...fleet.escort },
+    fired: events.items.slice(0, events.count).map((event) => ({ ...event })),
+    flying: projectiles.slots.flatMap((slot, berth) => (slot.active ? [{ ...slot, berth }] : [])),
+  };
+}
+
+function volleys(wake: Sighting[], weapon: WeaponName): number[] {
+  return wake.flatMap(({ fired }, index) =>
+    fired.some((event) => event.weapon === weapon) ? [index] : [],
+  );
+}
+
+function lostFrom(wake: Sighting[]): Shot[] {
+  return wake.flatMap(({ flying }, index) => {
+    const next = wake[index + 1];
+    return next === undefined
+      ? []
+      : flying.filter(({ berth }) => next.flying.every((shot) => shot.berth !== berth));
+  });
+}
+
+function landing({ x, y, directionX, directionY, speed }: Shot): Point {
+  return {
+    x: x + (directionX * speed) / STEPS_PER_SECOND,
+    y: y + (directionY * speed) / STEPS_PER_SECOND,
+  };
 }
 
 describe('simulation step (ADR-0005, ADR-0006)', () => {
@@ -113,6 +152,49 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
 
     expect(world.step).toBe(STEPS_OF_THE_LONGEST_MATCH);
     expect(world.seed).toBe(SEED);
+  });
+
+  test('FX-01 the events of a step are gone when the next step starts', () => {
+    const world = createMatch(buildConfig(), SEED);
+    const { events } = world;
+    const slots = [...events.items];
+    pushEvent(events, EventKind.ShotFired, WeaponName.Front, 508, 270, 1, 0);
+    pushEvent(events, EventKind.ShotFired, WeaponName.Left, 480, 243, 0, -1);
+    pushEvent(events, EventKind.ShotFired, WeaponName.Right, 480, 297, 0, 1);
+
+    expect(events.count).toBe(3);
+
+    step(world, Command.Forward);
+
+    expect(events.count).toBe(0);
+    expect(world.events).toBe(events);
+    expect(events.items).toHaveLength(EVENT_QUEUE_CAPACITY);
+    expect(events.items.filter((item, index) => item !== slots[index])).toEqual([]);
+    expect(pushEvent(events, EventKind.ShotFired, WeaponName.Right, 12, 34, 0, 1)).toBe(slots[0]);
+    expect(events.count).toBe(1);
+    expect(slots[0]).toStrictEqual({
+      kind: 'shotFired',
+      weapon: 'right',
+      x: 12,
+      y: 34,
+      directionX: 0,
+      directionY: 1,
+    });
+
+    for (let pushed = events.count; pushed < EVENT_QUEUE_CAPACITY + 5; pushed += 1) {
+      pushEvent(events, EventKind.ShotFired, WeaponName.Left, pushed, 2 * pushed, 0, -1);
+    }
+
+    expect(events.count).toBe(EVENT_QUEUE_CAPACITY);
+
+    step(world, 0);
+
+    expect(events.count).toBe(0);
+    expect(events.items.filter((item, index) => item !== slots[index])).toEqual([]);
+
+    step(world, Command.TurnLeft);
+
+    expect(events.count).toBe(0);
   });
 
   test('PW-03 replaying the same seed and command log reproduces the whole world', () => {
@@ -149,6 +231,14 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
     const escortWedged = wake.filter(
       ({ escort }) => escort.x === original.escort.x && escort.y === original.escort.y,
     );
+    const lost = lostFrom(wake);
+    const spent = lost.filter(({ remainingSteps }) => remainingSteps === 0);
+    const stopped = lost.filter(({ remainingSteps }) => remainingSteps > 0).map(landing);
+    const pastTheSouthWall = stopped.filter(({ y }) => y > 540);
+    const pastTheEastWall = stopped.filter(({ x }) => x > 960);
+    const onTheCay = stopped.filter(
+      ({ x, y }) => x > 740 - 3 && x < 830 + 3 && y > 380 - 3 && y < 440 + 3,
+    );
 
     expect(original.world.step).toBe(log.length);
     expect(new Set(wake.map(({ player }) => player.heading)).size).toBeGreaterThan(100);
@@ -166,6 +256,16 @@ describe('simulation step (ADR-0005, ADR-0006)', () => {
     expect(original.escort.y).toBeGreaterThanOrEqual(30);
     expect(original.escort.y).toBeLessThan(31);
     expect(original.wreck).toMatchObject({ active: false, x: -40, y: 200, thrust: 1 });
+    expect(volleys(wake, WeaponName.Front)).toEqual([96, 126, 156, 186, 216]);
+    expect(volleys(wake, WeaponName.Left)).toEqual([264, 324, 384, 444, 504]);
+    expect(volleys(wake, WeaponName.Right)).toEqual([264, 324, 384, 444, 504, 709]);
+    expect(wake[186]).toMatchObject({ fired: [{ weapon: 'front' }], flying: [] });
+    expect(pastTheSouthWall).toHaveLength(13);
+    expect(pastTheEastWall).toHaveLength(7);
+    expect(onTheCay).toHaveLength(5);
+    expect(stopped).toHaveLength(25);
+    expect(spent).toHaveLength(2);
+    expect(wake.at(-1)?.flying).toHaveLength(3);
 
     expect(replayedWake).toEqual(wake);
     expect(replayed.world).toStrictEqual(original.world);

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { acquire, createPool, release } from './pool';
 import type { Pool, PoolSlot } from './pool';
-import { createShip, resetShip } from './world';
-import type { Ship } from './world';
+import { testWeapons } from './testing/testWeapons';
+import { createProjectile, createShip, resetProjectile, resetShip } from './world';
 
 interface Crate extends PoolSlot {
   cargo: number;
@@ -16,21 +16,22 @@ function take<Slot extends PoolSlot>(pool: Pool<Slot>): Slot {
   return slot;
 }
 
-function overwriteEveryField(ship: Ship): void {
-  for (const [field, freshValue] of Object.entries(createShip())) {
+function overwriteEveryField(slot: PoolSlot, fresh: PoolSlot): void {
+  for (const [field, freshValue] of Object.entries(fresh)) {
     if (typeof freshValue === 'number') {
-      Reflect.set(ship, field, freshValue + 7.25);
+      Reflect.set(slot, field, freshValue + 7.25);
     } else if (typeof freshValue === 'boolean') {
-      Reflect.set(ship, field, !freshValue);
+      Reflect.set(slot, field, !freshValue);
+    } else if (field === 'weapons') {
+      Reflect.set(slot, field, testWeapons());
     } else {
       throw new Error(`No way to overwrite the field ${field}`);
     }
   }
 }
 
-function fieldsStillFresh(ship: Ship): string[] {
-  const fresh = createShip();
-  return Object.keys(fresh).filter((field) => Reflect.get(ship, field) === Reflect.get(fresh, field));
+function fieldsStillFresh(slot: PoolSlot, fresh: PoolSlot): string[] {
+  return Object.keys(fresh).filter((field) => Reflect.get(slot, field) === Reflect.get(fresh, field));
 }
 
 describe('entity pool (ADR-0006)', () => {
@@ -38,19 +39,51 @@ describe('entity pool (ADR-0006)', () => {
     const pool = createPool(2, createShip, resetShip);
     const ship = take(pool);
 
-    overwriteEveryField(ship);
-    expect(fieldsStillFresh(ship)).toEqual([]);
+    overwriteEveryField(ship, createShip());
+    expect(fieldsStillFresh(ship, createShip())).toEqual([]);
 
     release(pool, ship);
 
     expect(ship).toStrictEqual(createShip());
     expect(ship).toStrictEqual(pool.slots[1]);
 
-    overwriteEveryField(ship);
+    overwriteEveryField(ship, createShip());
     ship.active = false;
 
     expect(acquire(pool)).toBe(ship);
     expect(ship).toStrictEqual({ ...createShip(), active: true });
+  });
+
+  test('MT-05 a released projectile slot is indistinguishable from a fresh one', () => {
+    const pool = createPool(2, createProjectile, resetProjectile);
+    const projectile = take(pool);
+
+    overwriteEveryField(projectile, createProjectile());
+    expect(fieldsStillFresh(projectile, createProjectile())).toEqual([]);
+
+    release(pool, projectile);
+
+    expect(projectile).toStrictEqual({
+      active: false,
+      x: 0,
+      y: 0,
+      previousX: 0,
+      previousY: 0,
+      directionX: 0,
+      directionY: 0,
+      speed: 0,
+      radius: 0,
+      damage: 0,
+      remainingSteps: 0,
+    });
+    expect(projectile).toStrictEqual(createProjectile());
+    expect(projectile).toStrictEqual(pool.slots[1]);
+
+    overwriteEveryField(projectile, createProjectile());
+    projectile.active = false;
+
+    expect(acquire(pool)).toBe(projectile);
+    expect(projectile).toStrictEqual({ ...createProjectile(), active: true });
   });
 
   test('PW-03 the pool hands out slots in index order and returns null when exhausted', () => {

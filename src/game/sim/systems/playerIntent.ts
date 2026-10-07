@@ -12,4 +12,7 @@ export function playerIntent(world: World): void {
   } else {
     player.turn = turnsRight ? 1 : -1;
   }
+  player.fireFront = (commands & Command.FireFront) === 0 ? 0 : 1;
+  player.fireLeft = (commands & Command.FireLeft) === 0 ? 0 : 1;
+  player.fireRight = (commands & Command.FireRight) === 0 ? 0 : 1;
 }

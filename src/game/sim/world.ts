@@ -1,5 +1,6 @@
-import type { GameConfig } from '../config/gameConfig';
+import type { GameConfig, Weapons } from '../config/gameConfig';
 import type { IslandIndex } from './collision/islandIndex';
+import type { EventQueue } from './events';
 import type { Pool } from './pool';
 import type { RandomSource } from './random';
 
@@ -15,6 +16,27 @@ export interface Ship {
   turnRate: number;
   thrust: 0 | 1;
   turn: -1 | 0 | 1;
+  fireFront: 0 | 1;
+  fireLeft: 0 | 1;
+  fireRight: 0 | 1;
+  frontCooldown: number;
+  leftCooldown: number;
+  rightCooldown: number;
+  weapons: Weapons | null;
+}
+
+export interface Projectile {
+  active: boolean;
+  x: number;
+  y: number;
+  previousX: number;
+  previousY: number;
+  directionX: number;
+  directionY: number;
+  speed: number;
+  radius: number;
+  damage: number;
+  remainingSteps: number;
 }
 
 export interface World {
@@ -26,6 +48,8 @@ export interface World {
   readonly islands: IslandIndex;
   readonly ships: Pool<Ship>;
   readonly player: Ship;
+  readonly projectiles: Pool<Projectile>;
+  readonly events: EventQueue;
 }
 
 const FRESH_SHIP: Readonly<Ship> = Object.freeze({
@@ -40,6 +64,13 @@ const FRESH_SHIP: Readonly<Ship> = Object.freeze({
   turnRate: 0,
   thrust: 0,
   turn: 0,
+  fireFront: 0,
+  fireLeft: 0,
+  fireRight: 0,
+  frontCooldown: 0,
+  leftCooldown: 0,
+  rightCooldown: 0,
+  weapons: null,
 });
 
 export function resetShip(ship: Ship): void {
@@ -48,4 +79,26 @@ export function resetShip(ship: Ship): void {
 
 export function createShip(): Ship {
   return { ...FRESH_SHIP };
+}
+
+const FRESH_PROJECTILE: Readonly<Projectile> = Object.freeze({
+  active: false,
+  x: 0,
+  y: 0,
+  previousX: 0,
+  previousY: 0,
+  directionX: 0,
+  directionY: 0,
+  speed: 0,
+  radius: 0,
+  damage: 0,
+  remainingSteps: 0,
+});
+
+export function resetProjectile(projectile: Projectile): void {
+  Object.assign(projectile, FRESH_PROJECTILE);
+}
+
+export function createProjectile(): Projectile {
+  return { ...FRESH_PROJECTILE };
 }

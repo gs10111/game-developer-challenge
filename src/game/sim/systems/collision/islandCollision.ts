@@ -1,44 +1,17 @@
-import { circlePolygonOverlap } from '../../collision/circlePolygon';
 import type { Overlap } from '../../collision/circlePolygon';
-import { cellRange } from '../../collision/islandIndex';
-import type { CellRange, IslandIndex } from '../../collision/islandIndex';
+import type { IslandIndex } from '../../collision/islandIndex';
+import { deepestIslandOverlap } from '../../collision/islandOverlap';
 import { ISLAND_PUSH_ROUNDS } from '../../limits';
 import type { Ship, World } from '../../world';
 
-const range: CellRange = { firstColumn: 0, lastColumn: 0, firstRow: 0, lastRow: 0 };
 const overlap: Overlap = { depth: 0, normalX: 0, normalY: 0 };
 
 function pushOutOfTheDeepestOverlap(islands: IslandIndex, ship: Ship): boolean {
-  const { parts, columns, cells } = islands;
-  const { x, y, radius } = ship;
-  let depth = 0;
-  let normalX = 0;
-  let normalY = 0;
-  cellRange(islands, x - radius, y - radius, x + radius, y + radius, range);
-  for (let row = range.firstRow; row <= range.lastRow; row += 1) {
-    for (let column = range.firstColumn; column <= range.lastColumn; column += 1) {
-      const cell = cells[row * columns + column];
-      const count = cell === undefined ? 0 : cell.length;
-      for (let position = 0; position < count; position += 1) {
-        const candidate = cell?.[position];
-        const part = candidate === undefined ? undefined : parts[candidate];
-        if (
-          part !== undefined &&
-          circlePolygonOverlap(part, x, y, radius, overlap) &&
-          overlap.depth > depth
-        ) {
-          depth = overlap.depth;
-          normalX = overlap.normalX;
-          normalY = overlap.normalY;
-        }
-      }
-    }
-  }
-  if (depth === 0) {
+  if (!deepestIslandOverlap(islands, ship.x, ship.y, ship.radius, overlap)) {
     return false;
   }
-  ship.x += normalX * depth;
-  ship.y += normalY * depth;
+  ship.x += overlap.normalX * overlap.depth;
+  ship.y += overlap.normalY * overlap.depth;
   return true;
 }
 

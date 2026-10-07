@@ -120,3 +120,18 @@ VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): PL-02, PL-03, PL-09, CB-03, CB-06, CB-07 move to "In progress" in docs/requirements.md with "U" in their Test column; ARCHITECTURE.md gains weapons, projectiles and events; as-built lines go to ADR-0005 (whole-step cooldowns and lifetimes with their rounding, the firing order and a projectile moving in the step it is fired are part of the replay format), ADR-0007 (projectiles sample their end position against islands and leave the arena by their centre) and ADR-0006 (queue capacity, emptied at the start of the step, overflow dropped); the shared-loop follow-up of plan 0003 is closed.
 CARRIED TO LATER SLICES: the damage slice adds targets, sides, the swept test and the collision layers, and the `hit` event; the config schema bounds the projectile speed per step and requires positive weapon values; the loop driver must hand `world.events` to the renderer and the sound after every step, not once per frame, or shots are lost at low frame rates and repeated at high ones.
 ```
+
+## Outcome
+
+- Tests first: 34 new tests across the five subtasks. Subtasks 4 and 5 were finished by a second implementer run after a usage limit cut the first; it confirmed the red of each of their tests by temporary edits.
+- Test audit, full mode: approved; 127 of 127 tests in two consecutive runs.
+- Review, rigorous mode: no finding on spec, correctness, standards, ADRs, determinism or loop cost. Its one blocking finding was the length of `weapons.test.ts` (1,287 lines). The file was split, as a verified move with every test block unchanged, into `weaponsFiring.test.ts` (the tests of subtask 4), `weaponsCooldown.test.ts` (the tests of subtask 5) and `testing/weaponsHarness.ts` (their shared helpers). Where this plan says `weapons.test.ts`, read those two files.
+- The shared-loop follow-up of plan 0003 is closed: `islandCollision`, `blockedShips` and the projectile obstacles use `deepestIslandOverlap`.
+
+Carried to later slices, in addition to the list above:
+
+- `GameEvent` and `pushEvent` are shaped for a shot; the `hit` and `destroyed` events of the damage slice will reshape both.
+- The damage slice decides what happens when a projectile reaches an island and a target in the same step; the place of `projectileObstacles` in the collision stage cannot be observed until then.
+- A projectile expires when `remainingSteps` is exactly zero, which relies on whole-step stamps; a NaN lifetime or cooldown from an invalid config would make an immortal projectile or a locked weapon. The config schema has to reject it.
+- Nothing pins the numeric values of the command bits; pin them when replay logs start being stored.
+- Acquiring a projectile scans the pool for the first free slot, up to about 1,800 predicate calls on a full volley with a nearly full pool; inside the estimate, and to revisit only with the pool sizes.

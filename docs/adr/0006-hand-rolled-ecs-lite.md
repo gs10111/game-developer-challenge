@@ -28,6 +28,7 @@ A match holds at most around a hundred live entities (ships, projectiles, effect
 
 - Easier: each system has a unit test; the step order is readable in one place.
 - Harder: pool bookkeeping is manual, so released entities must be fully reset.
+- As built: the event queue holds 128 pre-allocated events, is emptied at the start of every step and drops what does not fit, so whoever consumes it reads it after each step and not once per frame. Acquiring from a pool scans for the first free slot, which costs up to the pool size per acquisition and keeps slot order deterministic.
 - Revisit: if entity counts grow by orders of magnitude, migrate components to typed arrays or adopt bitECS.
 
 ## Sources

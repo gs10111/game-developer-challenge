@@ -5,6 +5,19 @@ export interface Point {
 
 export type ConvexPolygon = readonly Point[];
 
+export interface Weapon {
+  readonly cooldownSeconds: number;
+  readonly projectileSpeed: number;
+  readonly projectileRadius: number;
+  readonly projectileLifetimeSeconds: number;
+  readonly damage: number;
+}
+
+export interface Weapons {
+  readonly front: Weapon;
+  readonly broadside: Weapon & { readonly spacing: number };
+}
+
 export interface GameConfig {
   readonly arena: {
     readonly width: number;
@@ -15,6 +28,7 @@ export interface GameConfig {
     readonly radius: number;
     readonly speed: number;
     readonly turnRateDegrees: number;
+    readonly weapons: Weapons;
   };
 }
 
@@ -55,5 +69,26 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
       ],
     ],
   },
-  player: { radius: 24, speed: 140, turnRateDegrees: 150 },
+  player: {
+    radius: 24,
+    speed: 140,
+    turnRateDegrees: 150,
+    weapons: {
+      front: {
+        cooldownSeconds: 0.5,
+        projectileSpeed: 420,
+        projectileRadius: 5,
+        projectileLifetimeSeconds: 1,
+        damage: 20,
+      },
+      broadside: {
+        cooldownSeconds: 1.5,
+        projectileSpeed: 360,
+        projectileRadius: 5,
+        projectileLifetimeSeconds: 0.8,
+        damage: 15,
+        spacing: 14,
+      },
+    },
+  },
 };
