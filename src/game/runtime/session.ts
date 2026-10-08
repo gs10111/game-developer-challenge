@@ -222,7 +222,9 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
     capturing: () => phase === 'running',
     onPauseKey: pause,
   });
-  window.addEventListener('blur', pause);
+  if (recorder === null) {
+    window.addEventListener('blur', pause);
+  }
   document.addEventListener('visibilitychange', pauseWhenHidden);
   options.host.append(renderer.canvas);
   pauseWhenHidden();

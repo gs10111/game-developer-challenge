@@ -18,7 +18,7 @@ The code is in `src/game/runtime/perf.ts`; the percentiles are nearest-rank and 
 ## How to run it
 
 1. Use the published build at https://game-developer-challenge-nine.vercel.app, or `pnpm build && pnpm preview`, in a visible Chromium tab.
-2. For the three-minute match, open `/?perf=1&duration=180&seed=7`, press **Play**, keep the tab in front and copy the report from the result dialog. `duration` sets the session time of benchmark matches, in seconds, without touching the saved options.
+2. For the three-minute match, open `/?perf=1&duration=180&seed=7`, press **Play**, keep its window visible and copy the report from the result dialog. `duration` sets the session time of benchmark matches, in seconds, without touching the saved options.
 3. For the memory check, open `/?perf=1&duration=60&cycles=5&seed=7` and press **Play** once. Five matches run in a row: when one ends, the app leaves the match screen, which destroys the session, and starts the next by itself. The report of the fifth lists the heap of all five.
 
 ## Environment of the measured run
@@ -110,4 +110,4 @@ The cost model of [ADR-0015](adr/0015-average-case-performance-model.md) puts a 
 - The window was narrow, 436 CSS pixels wide. The canvas is always rendered at 1024 by 576 and scaled by CSS, so the window size changes the compositing work, not the scene.
 - `performance.memory` exists only in Chromium and is rounded by the browser unless it is started with `--enable-precise-memory-info`; a heap snapshot in the developer tools is the stronger evidence.
 - Frame times come from the ticker callback, so they include the simulation and the scene update but not the time the compositor takes after it; the Performance panel of the developer tools shows that part.
-- A tab that is hidden or covered does not run frames, and the match pauses; a run has to stay in front.
+- A benchmark match does not pause when its window loses the focus, only when its tab is hidden, so it can run in a window of its own while another window is used. That window has to stay visible: the browser stops animation frames for a background tab and for a minimized or fully covered window, and the match pauses.
