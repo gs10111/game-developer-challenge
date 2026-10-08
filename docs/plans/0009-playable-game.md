@@ -27,7 +27,7 @@ This is not a plan. The work below was done in one day, directly, without a writ
 ## How it was checked
 
 - Unit tests: 16 for the match rules and the spawner and 3 for the performance summary and pilot, written with the code, not before it; 230 in all.
-- E2E tests: 12, run only in CI, on desktop and mobile Chromium; they passed on every push of this record.
+- E2E tests: 12, run only in CI, on desktop and mobile Chromium. They passed on every push of this record but one, where a test that depended on timing failed; the seam was changed so that it no longer can, and the suite passed again.
 - By hand, in a browser against the dev server: starting a match, the keyboard, firing, pause and resume, the end of a match, the saved record, ranking pages, history, options validation and persistence, and the in-page mock.
 - Not checked: the benchmark run from start to finish, because the browser of the session was hidden and ran no animation frames; sound, visual baselines and the cases the flow table of [requirements.md](../requirements.md) lists as missing.
 
