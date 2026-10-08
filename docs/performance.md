@@ -1,6 +1,6 @@
 # Performance report
 
-Status: the measuring tool is in place; **the numbers below have not been measured yet**. The game was built in a session whose browser was not visible, where the browser does not run animation frames, so no honest frame time could be taken there. The tables are to be filled from one run in a visible tab, as described.
+Status: **one run is measured**, a two-minute match on the published build. Still missing: the three-minute match the challenge asks for, the five cycles of the memory check, and the hardware of the machine that ran it.
 
 ## What is measured
 
@@ -22,38 +22,77 @@ The code is in `src/game/runtime/perf.ts`; the percentiles are nearest-rank and 
 3. Open `/?perf=1&seed=7`, press **Play**, keep the tab in front for three minutes and copy the report from the result dialog.
 4. For the memory check, set the session time to 60 seconds, open `/?perf=1&seed=7` and play five matches in a row with **Play Again**, or with **Main Menu** and **Play** to include leaving the match screen. The fifth report lists the heap of all five.
 
-## Reference environment
+## Environment of the measured run
 
 | Item | Value |
 | --- | --- |
-| Hardware | _to be filled: CPU, GPU, memory_ |
-| Operating system | _to be filled_ |
-| Browser | _to be filled: name and version_ |
-| Screen and window | _to be filled: resolution, refresh rate, device pixel ratio_ |
-| Build | Production build (`vite build`), served by `vite preview` or by the deploy |
-| Match config | Defaults, session time 180 s, enemy every 3 s, at most 10 enemies alive, seed 7, benchmark pilot |
+| Hardware | Not reported |
+| Operating system | Windows, 64-bit (the browser reports NT 10.0, which is Windows 10 or 11) |
+| Browser | Microsoft Edge 154 (Chromium 154) |
+| Window | Viewport of 436 by 610 CSS pixels, device pixel ratio 1 |
+| Canvas | 1024 by 576 pixels, scaled down by CSS to fit the window |
+| Build | The published production build |
+| Match config | Defaults: session time 120 s, an enemy every 3 s, at most 10 enemies alive; seed 7; benchmark pilot |
 
-## Three-minute match
+## Two-minute match
 
-Target: 60 frames per second.
+Target: 60 frames per second, which is 16.7 ms between frames.
 
 | Measure | Value |
 | --- | --- |
-| Frames | _not measured_ |
-| Average frames per second | _not measured_ |
-| Median time between frames | _not measured_ |
-| 95th percentile time between frames | _not measured_ |
-| 99th percentile time between frames | _not measured_ |
-| Longest time between frames | _not measured_ |
-| Frames slower than 33 ms | _not measured_ |
-| Live ships, average and maximum | _not measured_ |
-| Live projectiles, average and maximum | _not measured_ |
+| Frames | 7,194 in 120.07 s |
+| Average frames per second | 59.92 |
+| Median time between frames | 16.7 ms |
+| 95th percentile time between frames | 17.2 ms |
+| 99th percentile time between frames | 19.9 ms |
+| Longest time between frames | 43.3 ms |
+| Frames slower than 33 ms | 3 of 7,194 |
+| Live ships, the player included | 4.73 on average, 8 at most |
+| Live projectiles | 2.27 on average, 10 at most |
+| JavaScript heap | 12.0 MB at the start, 13.46 MB at the end |
+
+Reading: the match held the target. The median sits on the refresh interval, the 95th percentile is half a millisecond above it, and three frames in two minutes took longer than two refresh intervals.
+
+The raw report of the run:
+
+```json
+{
+  "cycle": 1,
+  "seed": 7,
+  "sessionSeconds": 120,
+  "spawnSeconds": 3,
+  "canvasWidth": 1024,
+  "canvasHeight": 576,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+  "viewport": "436x610",
+  "devicePixelRatio": 1,
+  "frames": {
+    "frames": 7194,
+    "seconds": 120.07,
+    "averageFps": 59.92,
+    "medianMs": 16.7,
+    "p95Ms": 17.2,
+    "p99Ms": 19.9,
+    "longestMs": 43.3,
+    "framesOver33Ms": 3
+  },
+  "ships": { "average": 4.73, "maximum": 8 },
+  "projectiles": { "average": 2.27, "maximum": 10 },
+  "heapMegabytes": { "atStart": 12, "atEnd": 13.46 }
+}
+```
+
+## Three-minute match
+
+Not measured yet. The run above used the default session time of 120 seconds; the challenge asks for three minutes, which needs the session time set to 180 seconds in Options before the run.
 
 ## Five cycles of start, play and exit
 
+Not measured yet. The run above is a single match, in which the heap grew by 1.46 MB; one match cannot show whether memory keeps growing from one cycle to the next.
+
 | Cycle | Heap at start (MB) | Heap at end (MB) |
 | --- | --- | --- |
-| 1 | _not measured_ | _not measured_ |
+| 1 | 12.0 | 13.46 |
 | 2 | _not measured_ | _not measured_ |
 | 3 | _not measured_ | _not measured_ |
 | 4 | _not measured_ | _not measured_ |
@@ -63,10 +102,13 @@ What to look for: a heap at the start of each cycle that keeps growing by a simi
 
 ## What the design expects
 
-The cost model of [ADR-0015](adr/0015-average-case-performance-model.md) puts a simulation step at about a thousand cheap operations for 20 enemies and 60 projectiles, far below one percent of a 16.7 ms frame, and the default config keeps at most 10 enemies alive. Rendering is one sprite per live entity, a tiling sprite for the water and about fifty static island tiles, with no per-frame allocation in the simulation or in the views. These are expectations, not results; the tables above are what counts.
+The cost model of [ADR-0015](adr/0015-average-case-performance-model.md) puts a simulation step at about a thousand cheap operations for 20 enemies and 60 projectiles, far below one percent of a 16.7 ms frame. Rendering is one sprite per live entity, a tiling sprite for the water and about fifty static island tiles, with no per-frame allocation in the simulation or in the views.
 
 ## Limitations
 
+- The measured load is well below the profile of ADR-0015: about 5 ships and 2 projectiles alive on average, against 21 and 60. The default config keeps at most 10 enemies alive, and the projectile count is lower than the fire rate of the pilot would give in open water, which suggests that many of its shots end early on a wall or an island; that was not checked. The run shows that a default match holds 60 frames per second; it does not show the headroom at the load of the profile.
+- The hardware of the run was not reported, so the result is not tied to a reference machine yet.
+- The window was narrow, 436 CSS pixels wide. The canvas is always rendered at 1024 by 576 and scaled by CSS, so the window size changes the compositing work, not the scene.
 - `performance.memory` exists only in Chromium and is rounded by the browser unless it is started with `--enable-precise-memory-info`; a heap snapshot in the developer tools is the stronger evidence.
 - Frame times come from the ticker callback, so they include the simulation and the scene update but not the time the compositor takes after it; the Performance panel of the developer tools shows that part.
 - A tab that is hidden or covered does not run frames, and the match pauses; a run has to stay in front.

@@ -137,7 +137,7 @@ The sprites in `public/assets` are copied from the `assets/` folder supplied wit
 
 - Enemies head straight for the player and slide along a shore in their way; they do not plan a route around islands.
 - There is no sound and no visual regression baseline yet.
-- The performance report has its tool and its method, but its numbers are still to be measured in a visible tab.
+- The performance report holds one measured run of two minutes (59.9 frames per second on average); the three-minute run, the memory check over five cycles and the hardware of the machine are still missing.
 - The E2E tests cover the main flows, not every case listed in the challenge.
 ## Deploy
 
