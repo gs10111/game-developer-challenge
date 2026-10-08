@@ -29,6 +29,7 @@ export function testConfig<Arena extends GameConfig['arena']>(arena: Arena) {
           },
         },
       },
+      steersAroundIslands: false,
       spawn: {
         intervalSeconds: 3600,
         minimumDistance: 300,

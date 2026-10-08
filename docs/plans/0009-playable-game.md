@@ -17,7 +17,7 @@ This is not a plan. The work below was done in one day, directly, without a writ
 - The spawner and the match rules run around `step`, in `advanceMatch`, and their state lives in a `Match` that wraps the world. ADR-0006 lists them as stages of the step; keeping them outside left `step` and its replay tests untouched.
 - The spawner follows a configured sequence of enemy types, which makes the appearance of both types certain and not a matter of chance. It spawns on the rectangle one radius inside the walls, so enemies sail in from the edges.
 - A match is ended by defeat before it is ended by time when both happen in the same step.
-- Steering around islands (EN-07) was left out: the challenge asks enemies to respect collisions with islands, which they do.
+- Steering around islands (EN-07) was first left out and then built as a route by island corners, behind a config switch that the fixtures keep off, so that the earlier tests and replays did not change. It has four tests of its own and a sweep of the default arena.
 - The renderer uses individual sprites and a `Graphics` health bar per ship, not atlases and particles (ADR-0008), and the islands are drawn with the nine sand tiles chosen by the neighbours of each cell.
 - With the test seam on, the frame loop only draws and the match advances only through `advance` (ADR-0010). It first ran on top of the live loop, and a test that counted projectiles failed once in CI when the runner was slow.
 - Mock latencies are fixed numbers; there is no random generator in the mock (ADR-0011).

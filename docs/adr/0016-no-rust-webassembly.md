@@ -36,6 +36,7 @@ This is on the order of a thousand cheap operations per step, estimated in the t
 
 - Easier: one toolchain, one language for reviewers, no boundary in tests or profiling.
 - Harder: nothing measurable at the average case.
+- As built: the enemy AI is the seek plus a route by island corners, not short rays. A graph of corner nodes with the shortest distances between them is built once per match; an enemy that cannot see the player tests its line of sight to each node, and the lines from the nodes to the player are tested once per step (`src/game/sim/ai/navigation.ts`). With 10 enemies and about a dozen nodes that is a few hundred segment tests per step at most, the same order as the estimate above.
 - Revisit: only if a future mode raises the average case by about 100× (a bullet-hell variant, for example), and then only for an isolated, benchmarked module.
 
 ## Sources

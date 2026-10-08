@@ -13,13 +13,13 @@
 
 ## Status at delivery
 
-Of the 136 requirements of the matrix, 132 are built, 3 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
+Of the 136 requirements of the matrix, 133 are built, 2 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 236 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
 
 ### Built
 
 | Area | What works |
 | --- | --- |
-| Simulation | Movement, front cannon and broadsides, projectiles, islands and arena walls, collision layers, hits, damage and score, the Chaser, the Shooter, the spawner, the match rules, and replays from a seed |
+| Simulation | Movement, front cannon and broadsides, projectiles, islands and arena walls, collision layers, hits, damage and score, the Chaser, the Shooter, enemies that go round islands, the spawner, the match rules, and replays from a seed |
 | Match on screen | PixiJS arena from the supplied assets, health bars, damage states, muzzle flash, hit spark and explosion, sound effects with a mute button, keyboard and touch controls, manual and automatic pause, HUD, loading with progress and a retry on failure |
 | Screens | Main menu with Play, Options, the controls, Ranking and Match History; result dialog with score, time played, reason and record status; options validated and kept after a refresh; last result kept after a refresh |
 | Ranking and history | Typed contracts, Axios, TanStack Query with pages, cache, retries and invalidation, and an outbox that registers each finished match once and keeps pending records after a failure or a refresh |
@@ -30,7 +30,6 @@ Of the 136 requirements of the matrix, 132 are built, 3 are partly built and 1 i
 
 | ID | Built | Missing |
 | --- | --- | --- |
-| EN-07 | Enemies are blocked by islands and slide along a shore | They do not steer around an island; a Shooter fires at an island in its way |
 | PW-01 | Twelve E2E tests for the main flows | The cases listed per flow in [requirements.md](requirements.md): flows T2 and T12 have no test, T3 to T7 and T9 to T11 are partial |
 | API-12 | A late response cannot overwrite newer data: the page is in the query key and requests carry an abort signal | A test that shows it |
 

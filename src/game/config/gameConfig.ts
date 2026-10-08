@@ -54,6 +54,7 @@ export interface GameConfig {
       readonly attackRange: number;
       readonly weapons: { readonly front: Weapon };
     };
+    readonly steersAroundIslands: boolean;
     readonly spawn: {
       readonly intervalSeconds: number;
       readonly minimumDistance: number;
@@ -155,6 +156,7 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
         },
       },
     },
+    steersAroundIslands: true,
     spawn: {
       intervalSeconds: 3,
       minimumDistance: 320,

@@ -31,7 +31,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | EN-04 | Shooter approaches and fires only within the configured attack range | `sim/systems/enemyIntent`, `sim/spawnEnemy` | T5, U | Done |
 | EN-05 | Enemies move and rotate with limited turn speed | `sim/systems/enemyIntent`, `sim/systems/movement` | T5, U | Done |
 | EN-06 | Enemies take damage and have their own health | `sim/systems/damage` | T4, U | Done |
-| EN-07 | Enemies respect island collision and steer around islands | `sim/ai/steering`, `sim/systems/collision` | T5 | In progress |
+| EN-07 | Enemies respect island collision and steer around islands | `sim/ai/navigation`, `sim/systems/collision` | T5 | Done |
 | EN-08 | Both enemy types appear in a default match (mix in the config) | `sim/spawner`, `config` | T5 | Done |
 | EN-09 | Spawn at the configured interval until the match ends | `sim/spawner` | T5 | Done |
 | EN-10 | Spawn point free of obstacles | `sim/spawner` | T5, U | Done |

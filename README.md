@@ -38,7 +38,7 @@ Every gameplay value is in one typed object, `DEFAULT_GAME_CONFIG` in `src/game/
 | Broadside, each side | Cooldown 1.5 s, three parallel projectiles 14 apart, radius 5, at 360 per second for 0.8 s (range 288), damage 15 each |
 | Chaser | Radius 18, speed 110, turn 160 degrees per second, health 30, contact damage 25 |
 | Shooter | Radius 22, speed 70, turn 90 degrees per second, health 40, attack range 260; cannon with cooldown 1.6 s, projectile of radius 5 at 260 per second for 1.2 s (range 312), damage 10 |
-| Arena | 1024 by 576, with four islands made of five rectangles |
+| Arena | 1024 by 576, with four islands made of five rectangles. Enemies steer around them (`enemies.steersAroundIslands`) |
 
 The reasons for these numbers are in the Balancing section of [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -174,7 +174,7 @@ Sources and licences are in [LICENSES.md](LICENSES.md). The sprites in `public/a
 
 ## Known limitations
 
-- Enemies head straight for the player and slide along a shore in their way; they do not plan a route around islands.
+- Enemies do not avoid each other and can overlap.
 - There is no visual regression baseline yet.
 - Performance was measured on one desktop, in one browser, at the load of a default match: 59.9 frames per second over three minutes and no growth of the heap over five cycles.
 - The E2E tests cover the main flows, not every case listed in the challenge.

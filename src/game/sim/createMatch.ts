@@ -1,4 +1,5 @@
 import type { GameConfig } from '../config/gameConfig';
+import { prepareNavigation } from './ai/navigation';
 import { createIslandIndex } from './collision/islandIndex';
 import { Layer } from './collision/layers';
 import { createEventQueue } from './events';
@@ -48,7 +49,7 @@ function acquirePlayer(ships: Pool<Ship>, config: GameConfig): Ship {
 export function createMatch(config: GameConfig, seed: number): World {
   const snapshot = frozenCopy(config);
   const ships = createPool(SHIP_POOL_CAPACITY, createShip, resetShip);
-  return {
+  const world: World = {
     step: 0,
     seed,
     rng: createRandomSource(seed),
@@ -61,4 +62,8 @@ export function createMatch(config: GameConfig, seed: number): World {
     events: createEventQueue(EVENT_QUEUE_CAPACITY),
     score: 0,
   };
+  if (snapshot.enemies.steersAroundIslands) {
+    prepareNavigation(world);
+  }
+  return world;
 }

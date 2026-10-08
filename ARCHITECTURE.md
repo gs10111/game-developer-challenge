@@ -99,7 +99,7 @@ Five things are worth stating:
 - A Chaser that the player's shots bring to zero in the very step it would reach the player does not explode: the player takes no damage and gets the point. One that is hit in that step but survives the shots still explodes, with no point.
 - Several Chasers that reach the player in one step each apply their damage.
 - A Chaser always moves forward, so while it turns it travels on a circle whose radius is its speed divided by its turn rate. If that circle were wider than the contact distance, the sum of the two radii, the Chaser could circle a still player for ever. The defaults keep it narrower, 39.4 against 42, and a test pins the relation.
-- Both enemy types head straight for the player. An island in the way holds them or makes them slide along the shore until the player moves, and a Shooter fires at an island that stands between it and the player. Steering around islands and a line-of-fire check come later.
+- Enemies go round islands. When an island hides the player, an enemy heads for a corner of an island instead. The corners, moved out by the width of a hull, are the nodes of a small graph built when the match is created, with the shortest distances between them; in each step an enemy that cannot see the player takes the corner it can see that gives the shortest way to the player (`src/game/sim/ai/navigation.ts`). A Shooter holds and fires only when nothing hides the player. `enemies.steersAroundIslands` in the config switches all this off, and the fixtures of the simulation tests keep it off, so that the earlier tests and replays are unchanged.
 - Ships do not block each other: enemies overlap one another, and a Shooter can sit on the player.
 
 ### Islands and collision
@@ -167,6 +167,7 @@ There is no backend. The MSW service worker starts before the first render in ev
 
 The default values are a first balance, chosen by reasoning and by a few matches, not tuned over many sessions. What they aim for:
 
+- Islands are cover, not a wall to hide behind for ever: an enemy that loses sight of the player goes round, and a Shooter stops firing until it sees the player again.
 - Moving is always an answer. The player sails at 140, a Chaser at 110 and a Shooter at 70, so the player can open distance from anything, while a ship that stands still and does nothing is sunk in about twenty seconds.
 - Two hits sink a Chaser: its health is 30 against 20 of the front cannon and 15 of each broadside projectile. A Shooter, at 40, takes two front shots or three broadside projectiles.
 - The broadside trades reach and rhythm for weight: three projectiles of 15 every 1.5 s with a range of 288, against one of 20 every 0.5 s with a range of 420. It rewards coming alongside an enemy.
@@ -178,6 +179,6 @@ The default values are a first balance, chosen by reasoning and by a few matches
 
 - The arena layout and the gameplay values are a first balance.
 - The config is validated only for the two options of the Options tab: a malformed island, a ship or a projectile fast enough to cross an island in one step, a non-positive cooldown, a Chaser that turns wider than its contact distance, or a Shooter whose shots fall short of its attack range would not be caught.
-- Enemies do not steer around islands, and a Shooter fires at an island that stands between it and the player.
+- Enemies do not avoid each other and can overlap. Their route takes the hull of the smaller enemy type, so the larger one brushes a corner now and then and slides round it.
 - A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
 - No sound, no visual regression baselines and no performance measurements yet.

@@ -6,7 +6,7 @@ State of the tests at commit `2441034`, 8 October 2026, taken from the CI run of
 | --- | --- | --- |
 | Lint | `pnpm lint` | No findings |
 | Typecheck | `pnpm typecheck` | No errors |
-| Unit tests | `pnpm test` | 230 of 230 passing, in 40 files |
+| Unit tests | `pnpm test` | 236 of 236 passing, in 42 files |
 | E2E tests | `pnpm test:e2e` | 24 of 24 passing: 12 tests, each on desktop and on mobile Chromium |
 
 ## Unit tests
@@ -15,10 +15,10 @@ Vitest, in Node, with no browser. Every test name starts with the ID of the requ
 
 | Area | What is covered |
 | --- | --- |
-| `src/game/sim` | Movement, weapons and cooldowns, projectiles, islands and walls, collision primitives, layers, hits, damage and score, the Chaser, the Shooter, the spawner, the match rules, pools, the seeded generator, the sine table, and three replays from a seed |
+| `src/game/sim` | Movement, weapons and cooldowns, projectiles, islands and walls, collision primitives, layers, hits, damage and score, the Chaser, the Shooter, the route of enemies around islands, the spawner, the match rules, pools, the seeded generator, the sine table, and three replays from a seed |
 | `src/game/loop` | The fixed-step clock: steps per frame at 30, 60 and 144 frames per second, the clamp, the reset |
 | `src/game/runtime` | The summary of frame times and the benchmark pilot |
-| `tests/config` | The default config: layout, player, weapons, enemies, spawn settings and the relations between its numbers |
+| `tests/config` | The default config: layout, player, weapons, enemies, spawn settings, the relations between its numbers, and a Chaser reaching a still player from every part of the default arena |
 | `tests/tooling` | The lint rules that keep the simulation pure and deterministic, the pinned toolchain versions, the generated sine table |
 
 Rendering, input, the screens, the API client and the mock have no unit tests; they are covered by the E2E tests below and by nothing else.
