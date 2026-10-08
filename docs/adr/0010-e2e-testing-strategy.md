@@ -30,7 +30,7 @@ Gameplay renders to a canvas, so DOM selectors cannot observe it. Tests must use
 
 - Easier: failures replay locally with the same seed and step count.
 - Harder: the seam must never ship enabled without the flag.
-- As built: the seam is `window.pirateBattle`, enabled by `?e2e=1`, with `snapshot()` and `advance(steps)`. `advance` runs whole steps of the real match on top of the running loop, which is not paused. Tests press real keys and the on-screen buttons and fail on console errors, except the browser's own "Failed to load resource" line in the scenarios that answer with errors. Not built: visual snapshots and their baselines.
+- As built: the seam is `window.pirateBattle`, enabled by `?e2e=1`, with `snapshot()` and `advance(steps)`. While the seam is on, the frame loop only draws and the match advances only through `advance`, in whole steps of the real rules; a first version left the loop running and one test failed in CI when a slow runner let a cooldown elapse between two calls. Tests press real keys and the on-screen buttons and fail on console errors, except the browser's own "Failed to load resource" line in the scenarios that answer with errors. Not built: visual snapshots and their baselines.
 - Revisit: if WebGL output differs between CI runners, force a software renderer for the visual project.
 
 ## Sources

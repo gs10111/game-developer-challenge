@@ -145,7 +145,7 @@ These two run around `step` and not inside it, a departure from the stage list o
 - Rendering (`src/game/render`): one view per pool slot, created once and hidden when the slot is free. Ships are sprites chosen by kind and by a third of health left, with a health bar above; projectiles, muzzle flashes, hit sparks and explosions come from fixed pools. Textures are loaded once through the PixiJS asset cache, with progress, and a failure is shown with a retry before the combat starts. The canvas has the size of the arena at up to twice the pixel density and is scaled by CSS, keeping 16:9.
 - Input (`src/game/input`): the keyboard and the touch buttons set bits of one command mask, read once per step. Keys are captured only while the match is running.
 - Lifecycle: `destroy` removes the listeners, destroys the application and its ticker and keeps the cached textures. The React effect that creates the session cancels a creation still in flight, which makes it safe under Strict Mode ([ADR-0002](docs/adr/0002-strict-mode-safe-pixi-lifecycle.md)).
-- Test seam: with `?e2e=1` the session exposes `window.pirateBattle` with `snapshot()` and `advance(steps)` ([ADR-0010](docs/adr/0010-e2e-testing-strategy.md)).
+- Test seam: with `?e2e=1` the frame loop only draws, and the session exposes `window.pirateBattle` with `snapshot()` and `advance(steps)`, the only thing that advances the match then ([ADR-0010](docs/adr/0010-e2e-testing-strategy.md)).
 
 ## Interface
 

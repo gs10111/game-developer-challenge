@@ -123,7 +123,7 @@ When the service worker cannot answer, because the browser blocks service worker
 ## Tests
 
 - Unit tests (Vitest) cover the simulation: movement, weapons, collisions, damage, both enemy types, the spawner, the match rules and replays from a seed.
-- E2E tests (Playwright, desktop and mobile Chromium) drive the real controls against the production build. With `?e2e=1` the page exposes `window.pirateBattle`, which reads the state of the match and advances the simulation by whole steps; the rules, inputs, collisions and rendering are the real ones.
+- E2E tests (Playwright, desktop and mobile Chromium) drive the real controls against the production build. With `?e2e=1` the page exposes `window.pirateBattle`, which reads the state of the match and is then the only thing that advances the simulation, by whole steps; the rules, inputs, collisions and rendering are the real ones.
 
 ## Performance
 

@@ -19,7 +19,7 @@ This is not a plan. The work below was done in one day, directly, without a writ
 - A match is ended by defeat before it is ended by time when both happen in the same step.
 - Steering around islands (EN-07) was left out: the challenge asks enemies to respect collisions with islands, which they do.
 - The renderer uses individual sprites and a `Graphics` health bar per ship, not atlases and particles (ADR-0008), and the islands are drawn with the nine sand tiles chosen by the neighbours of each cell.
-- The test seam advances whole steps on top of the running loop; it does not pause the loop (ADR-0010).
+- With the test seam on, the frame loop only draws and the match advances only through `advance` (ADR-0010). It first ran on top of the live loop, and a test that counted projectiles failed once in CI when the runner was slow.
 - Mock latencies are fixed numbers; there is no random generator in the mock (ADR-0011).
 - When the service worker does not answer, the same handlers answer in the page (ADR-0012). The first deploy showed the ranking as failed, and the host answers unknown paths with `index.html`.
 - A benchmark match raises the health of the player in its config snapshot so that it lasts its session time, and is never sent to the ranking.

@@ -120,6 +120,7 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
   const clock = createFixedStepClock(performance.now());
   const hud = createStore<HudState>(() => readHud(match, 'running'));
   const recorder = perfRequested() ? createPerfRecorder() : null;
+  const steppedByTests = new URLSearchParams(window.location.search).has('e2e');
   let phase: MatchPhase = 'running';
   let lastFrameMs = performance.now();
 
@@ -195,10 +196,10 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
       const { ships, projectiles } = match.world;
       recorder.frame(frameMs, countActive(ships.slots), countActive(projectiles.slots));
     }
-    if (phase === 'running') {
+    if (phase === 'running' && !steppedByTests) {
       runSteps(advance(clock, now));
     }
-    const running = phase === 'running';
+    const running = phase === 'running' && !steppedByTests;
     renderer.draw(match.world, running ? interpolation(clock) : 1, running ? elapsedSeconds : 0);
     publish();
   });
@@ -212,7 +213,7 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
   options.host.append(renderer.canvas);
   pauseWhenHidden();
 
-  if (new URLSearchParams(window.location.search).has('e2e')) {
+  if (steppedByTests) {
     window.pirateBattle = {
       snapshot: () => describe(match, phase),
       advance: (steps) => {
