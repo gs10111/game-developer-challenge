@@ -102,7 +102,7 @@ Reading:
 - No continuous growth. The heap at the start of a match rises once, from 11.0 MB in the first cycle to 13.9 MB in the second, and then stays between 14.2 and 14.4 MB, a little lower in each of the last three cycles. The heap at the end stays between 12.0 and 13.0 MB. What is added after the first match is kept once and reused: the textures in the asset cache and the compiled code.
 - Every match ends with less heap than the next one starts with, and from the second cycle on with less than it started with itself, so the garbage collector reclaims what a match allocates while the match runs.
 - Live entities are the same in every cycle, about 5 ships and 2 projectiles on average, 8 and 9 at most, as expected from the same seed and the same pilot.
-- The second cycle was disturbed: 35 frames slower than 33 ms and a 99th percentile of 33.9 ms, against 0 to 3 slow frames in the other four. The machine was being used for other work during the run, in another window; the cause of that cycle was not investigated.
+- The second cycle was disturbed: 35 frames slower than 33 ms and a 99th percentile of 33.9 ms, against 0 to 3 slow frames in the other four. The run was left in a window of its own while the machine was free for other work, which may be the cause; it was not investigated.
 
 Leaving a match destroys the PixiJS application with its ticker and display objects and removes the keyboard, blur and visibility listeners; the textures stay in the asset cache on purpose and are reused by the next match.
 ## What the design expects
