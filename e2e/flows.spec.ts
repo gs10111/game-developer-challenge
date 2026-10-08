@@ -87,7 +87,7 @@ test('MT-05 Play Again starts a clean match', async ({ page }) => {
   await page.getByRole('button', { name: 'Play Again' }).click();
   await page.waitForFunction(() => {
     const seam = (window as unknown as { pirateBattle?: Seam }).pirateBattle;
-    return seam !== undefined && seam.snapshot().step === 0;
+    return seam?.snapshot().step === 0;
   });
 
   const fresh = await advance(page, 0);
