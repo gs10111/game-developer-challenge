@@ -76,7 +76,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | FX-03 | Ships show damage states by health band | `render/renderer` | T4, visual | Done |
 | FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/renderer`, `sim/events` (the hit event, for shots and for a Chaser's impact) | T4, U | Done |
 | FX-05 | Effects are short and do not hide ships or projectiles | `render` | manual | Done |
-| FX-06 | Extra: firing, explosion and ambient sounds with a mute control | `audio` | manual | Pending |
+| FX-06 | Extra: firing, explosion and ambient sounds with a mute control | `audio` | manual | Done |
 
 ## Screens, configuration and local persistence (Challenge 3)
 
@@ -160,14 +160,14 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
 | UX-01 | Provided assets used as the visual base | `render`, `ui` | visual | Done |
-| UX-02 | Conversions and optimisations with sources and licences included | `assets/`, `LICENSES.md` | Doc | In progress |
+| UX-02 | Conversions and optimisations with sources and licences included | `assets/`, `LICENSES.md` | Doc | Done |
 | UX-03 | Desktop and mobile, with usable touch and no clipping of arena or HUD | `ui`, `render/renderer` | T9, visual mobile | Done |
 | UX-04 | Defined mobile orientation (landscape, with a portrait notice) | `ui/MatchScreen` | T9 | Done |
 | UX-05 | Layout adapts to resize without changing match rules | `render/renderer` | T9 | Done |
 | UX-06 | Visible progress or state while assets load | `ui/MatchScreen` | T2 | Done |
 | UX-07 | Keyboard navigation in menus with visible focus | `ui` | T1, axe | Done |
 | UX-08 | Focus management in dialogs (trap and return) | `ui/Modal` | T7 | Done |
-| UX-09 | Labels, adequate contrast and accessible error messages | `ui` | T1, axe | In progress |
+| UX-09 | Labels, adequate contrast and accessible error messages | `ui` | T1, axe | Done |
 | UX-10 | Score, time and state in semantic markup, without per-frame announcements | `ui/MatchScreen` | T4, T7 | Done |
 | UX-11 | Game keys captured only while gameplay is active | `input/keyboard` | T1, T9 | Done |
 | UX-12 | No unhandled console errors in the expected flows | whole app, `e2e/fixtures.ts` | Playwright fails on `console.error` | Done |

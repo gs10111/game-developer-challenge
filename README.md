@@ -17,6 +17,7 @@ The game is playable: a match against Chasers and Shooters among islands, with k
 | Front cannon | Space | ● |
 | Left and right broadsides | Q / E | ◀ ▶ |
 | Pause | P or Esc | Pause button |
+| Sound on or off | — | Sound button |
 
 A match lasts the configured session time or until the ship is destroyed. Each enemy sunk by the player is worth one point; a Chaser that blows itself up on the player is worth none. The match pauses by itself when the window loses focus or the tab is hidden, and only the player resumes it.
 
@@ -169,12 +170,12 @@ Opening the game with `?perf=1` runs a match with a fixed pilot and records the 
 
 ## Assets
 
-The sprites in `public/assets` are copied from the `assets/` folder supplied with the challenge (ships, cannon ball, explosion, fire, sand and water tiles, the title and the menu background).
+Sources and licences are in [LICENSES.md](LICENSES.md). The sprites in `public/assets` are copied from the `assets/` folder supplied with the challenge (ships, cannon ball, explosion, fire, sand and water tiles, the title and the menu background).
 
 ## Known limitations
 
 - Enemies head straight for the player and slide along a shore in their way; they do not plan a route around islands.
-- There is no sound and no visual regression baseline yet.
+- There is no visual regression baseline yet.
 - The performance report holds one measured run of two minutes (59.9 frames per second on average); the three-minute run, the memory check over five cycles and the hardware of the machine are still missing.
 - The E2E tests cover the main flows, not every case listed in the challenge.
 ## Deploy

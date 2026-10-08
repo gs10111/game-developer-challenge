@@ -3,6 +3,7 @@ import type { PointerEvent } from 'react';
 import { useStore } from 'zustand';
 import { END_REASON_LABELS } from '../api/contracts';
 import type { MatchRecord } from '../api/contracts';
+import { loadMuted } from '../game/audio/sounds';
 import type { GameConfig } from '../game/config/gameConfig';
 import { perfReports } from '../game/runtime/perf';
 import type { PerfReport } from '../game/runtime/perf';
@@ -103,19 +104,23 @@ function Hud({ session }: { session: GameSession }) {
   const health = useStore(session.hud, (state) => state.health);
   const maximumHealth = useStore(session.hud, (state) => state.maximumHealth);
   const healthId = useId();
+  const assets = `${import.meta.env.BASE_URL}assets/`;
 
   return (
     <div className="hud" role="group" aria-label="Match status">
       <span className="hud-item">
+        <img className="hud-icon" src={`${assets}icon_score.png`} alt="" />
         Score <output data-testid="hud-score">{score}</output>
       </span>
       <span className="hud-item">
+        <img className="hud-icon" src={`${assets}icon_time.png`} alt="" />
         Time{' '}
         <output aria-live="off" data-testid="hud-time">
           {formatClock(remainingSeconds)}
         </output>
       </span>
       <span className="hud-item">
+        <img className="hud-icon" src={`${assets}icon_heart.png`} alt="" />
         <label htmlFor={healthId}>Health</label>
         <meter
           id={healthId}
@@ -145,6 +150,7 @@ interface ActiveMatchProps {
 function ActiveMatch({ session, result, benchmark, onPlayAgain, onExit }: ActiveMatchProps) {
   const phase = useStore(session.hud, (state) => state.phase);
   const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
+  const [muted, setMuted] = useState(loadMuted);
 
   return (
     <>
@@ -158,6 +164,16 @@ function ActiveMatch({ session, result, benchmark, onPlayAgain, onExit }: Active
         <div className="match-actions">
           <button type="button" onClick={session.pause} disabled={phase !== 'running'}>
             Pause
+          </button>
+          <button
+            type="button"
+            aria-pressed={!muted}
+            onClick={() => {
+              session.setMuted(!muted);
+              setMuted(!muted);
+            }}
+          >
+            Sound
           </button>
           <button
             type="button"

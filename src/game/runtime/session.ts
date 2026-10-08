@@ -1,5 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import type { StoreApi } from 'zustand/vanilla';
+import { createSounds } from '../audio/sounds';
+import type { SoundName } from '../audio/sounds';
 import type { GameConfig } from '../config/gameConfig';
 import { clear, createCommandState, press, release } from '../input/commandState';
 import { attachKeyboard } from '../input/keyboard';
@@ -7,6 +9,8 @@ import { advance, createFixedStepClock, interpolation, reset } from '../loop/fix
 import { createRenderer } from '../render/renderer';
 import { loadTextures } from '../render/textures';
 import { Layer } from '../sim/collision/layers';
+import { EventKind, WeaponName } from '../sim/events';
+import type { GameEvent } from '../sim/events';
 import { advanceMatch, startMatch } from '../sim/match';
 import type { Match, MatchOutcome } from '../sim/match';
 import { STEPS_PER_SECOND } from '../sim/stepRate';
@@ -48,6 +52,7 @@ export interface GameSession {
   release: (command: number) => void;
   pause: () => void;
   resume: () => void;
+  setMuted: (muted: boolean) => void;
   destroy: () => void;
 }
 
@@ -112,6 +117,13 @@ function describe(match: Match, phase: MatchPhase) {
   };
 }
 
+function soundOf(event: GameEvent): SoundName {
+  if (event.kind === EventKind.ShotFired) {
+    return event.weapon === WeaponName.Front ? 'cannon' : 'broadside';
+  }
+  return event.kind === EventKind.Hit ? 'hit' : 'explosion';
+}
+
 export async function createGameSession(options: SessionOptions): Promise<GameSession> {
   const textures = await loadTextures(options.onProgress);
   const renderer = await createRenderer(options.config, textures);
@@ -121,6 +133,7 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
   const hud = createStore<HudState>(() => readHud(match, 'running'));
   const recorder = perfRequested() ? createPerfRecorder() : null;
   const steppedByTests = new URLSearchParams(window.location.search).has('e2e');
+  const sounds = createSounds(steppedByTests || recorder !== null);
   let phase: MatchPhase = 'running';
   let lastFrameMs = performance.now();
 
@@ -139,6 +152,7 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
         const event = world.events.items[index];
         if (event !== undefined) {
           renderer.react(event, world);
+          sounds.play(soundOf(event));
         }
       }
     }
@@ -237,6 +251,7 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
     },
     pause,
     resume,
+    setMuted: sounds.setMuted,
     destroy: () => {
       detachKeyboard();
       window.removeEventListener('blur', pause);
