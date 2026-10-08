@@ -11,7 +11,7 @@
 
 ## Status at delivery
 
-Of the 136 requirements of the matrix, 121 are built, 13 are partly built and 2 are not built. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
+Of the 136 requirements of the matrix, 122 are built, 12 are partly built and 2 are not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
 
 ### Built
 
@@ -22,7 +22,7 @@ Of the 136 requirements of the matrix, 121 are built, 13 are partly built and 2 
 | Screens | Main menu with Play, Options, the controls, Ranking and Match History; result dialog with score, time played, reason and record status; options validated and kept after a refresh; last result kept after a refresh |
 | Ranking and history | Typed contracts, Axios, TanStack Query with pages, cache, retries and invalidation, and an outbox that registers each finished match once and keeps pending records after a failure or a refresh |
 | Mock API | MSW handlers with fixtures and local persistence, eleven selectable scenarios, a panel to choose one and restore the data, and a fallback that answers in the page when the service worker cannot |
-| Delivery | CI with lint, typecheck, unit and E2E tests in a container, a deploy on Vercel, README and ARCHITECTURE |
+| Delivery | CI with lint, typecheck, unit and E2E tests in a container, a public deploy on Vercel with the mock active, README and ARCHITECTURE |
 
 ### Partly built
 
@@ -35,8 +35,7 @@ Of the 136 requirements of the matrix, 121 are built, 13 are partly built and 2 
 | UX-02 | The sprites are copied from the folder supplied with the challenge | A file listing sources and licences |
 | UX-09 | Labels, described fields and error messages announced to assistive technology | A contrast audit |
 | SC-16 | The menu uses the title and the background of the asset pack | The HUD and the buttons do not use the supplied sprites |
-| DL-03 | Setup, commands, controls, options, scenarios and limitations in the README | Test and profiling results, and the address of the deploy |
-| DL-02 | The game is deployed on Vercel from the main branch, with the mock active | Public access to be confirmed: the deployment address that was checked answers only to a logged-in Vercel account |
+| DL-03 | Setup, commands, controls, options, scenarios, limitations and the address of the deploy in the README | Test and profiling results |
 
 Outside the matrix: only the two options and the captain name are validated, not the whole game config.
 

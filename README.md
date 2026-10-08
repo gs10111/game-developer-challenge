@@ -2,6 +2,8 @@
 
 A top-down 2D naval shooter built with React, TypeScript and PixiJS for the Jungle Gaming game developer challenge. The original statement, in Portuguese, is in [CHALLENGE.md](CHALLENGE.md).
 
+**Play it at https://game-developer-challenge-nine.vercel.app.**
+
 The game is playable: a match against Chasers and Shooters among islands, with keyboard and touch controls, pause, a result screen, a ranking and a match history served by a mock API.
 
 [docs/README.md](docs/README.md) says what is built and what is not. [docs/requirements.md](docs/requirements.md) lists every requirement with its status, [docs/adr/](docs/adr/README.md) records the architecture decisions, and [ARCHITECTURE.md](ARCHITECTURE.md) describes the system as built.
@@ -139,4 +141,6 @@ The sprites in `public/assets` are copied from the `assets/` folder supplied wit
 - The E2E tests cover the main flows, not every case listed in the challenge.
 ## Deploy
 
-`vercel.json` builds the project with pnpm and rewrites every route to `index.html`.
+The game is published at https://game-developer-challenge-nine.vercel.app, from the `main` branch, on Vercel. `vercel.json` builds the project with pnpm and rewrites every route to `index.html`. The mock API is part of the build, so the published site needs no backend.
+
+Addresses of single deployments, with a hash in the name, ask for a Vercel login; the address above does not.

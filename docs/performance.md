@@ -17,7 +17,7 @@ The code is in `src/game/runtime/perf.ts`; the percentiles are nearest-rank and 
 
 ## How to run it
 
-1. Use the published build, or `pnpm build && pnpm preview`, in a visible Chromium tab.
+1. Use the published build at https://game-developer-challenge-nine.vercel.app, or `pnpm build && pnpm preview`, in a visible Chromium tab.
 2. In **Options**, set the game session time to 180 seconds and save.
 3. Open `/?perf=1&seed=7`, press **Play**, keep the tab in front for three minutes and copy the report from the result dialog.
 4. For the memory check, set the session time to 60 seconds, open `/?perf=1&seed=7` and play five matches in a row with **Play Again**, or with **Main Menu** and **Play** to include leaving the match screen. The fifth report lists the heap of all five.
