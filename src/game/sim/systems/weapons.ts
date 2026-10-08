@@ -1,4 +1,4 @@
-import type { Weapon, Weapons } from '../../config/gameConfig';
+import type { Armament, Weapon, Weapons } from '../../config/gameConfig';
 import { shotLayerOf } from '../collision/layers';
 import type { Layer } from '../collision/layers';
 import { EventKind, pushEvent, WeaponName } from '../events';
@@ -89,41 +89,24 @@ function fireBroadside(
   }
 }
 
-function shipWeapons(world: World, ship: Ship, fitted: Weapons): void {
+function shipWeapons(world: World, ship: Ship, fitted: Armament): void {
   const aheadX = cosine(ship.heading);
   const aheadY = sine(ship.heading);
+  const broadside = fitted.broadside;
   ship.frontCooldown = cooled(ship.frontCooldown);
   if (ship.frontCooldown === 0 && ship.fireFront === 1) {
     ship.frontCooldown = stepsFromSeconds(fitted.front.cooldownSeconds);
     fireFront(world, ship, fitted.front, aheadX, aheadY);
   }
   ship.leftCooldown = cooled(ship.leftCooldown);
-  if (ship.leftCooldown === 0 && ship.fireLeft === 1) {
-    ship.leftCooldown = stepsFromSeconds(fitted.broadside.cooldownSeconds);
-    fireBroadside(
-      world,
-      ship,
-      fitted.broadside,
-      WeaponName.Left,
-      aheadX,
-      aheadY,
-      aheadY,
-      0 - aheadX,
-    );
+  if (broadside !== undefined && ship.leftCooldown === 0 && ship.fireLeft === 1) {
+    ship.leftCooldown = stepsFromSeconds(broadside.cooldownSeconds);
+    fireBroadside(world, ship, broadside, WeaponName.Left, aheadX, aheadY, aheadY, 0 - aheadX);
   }
   ship.rightCooldown = cooled(ship.rightCooldown);
-  if (ship.rightCooldown === 0 && ship.fireRight === 1) {
-    ship.rightCooldown = stepsFromSeconds(fitted.broadside.cooldownSeconds);
-    fireBroadside(
-      world,
-      ship,
-      fitted.broadside,
-      WeaponName.Right,
-      aheadX,
-      aheadY,
-      0 - aheadY,
-      aheadX,
-    );
+  if (broadside !== undefined && ship.rightCooldown === 0 && ship.fireRight === 1) {
+    ship.rightCooldown = stepsFromSeconds(broadside.cooldownSeconds);
+    fireBroadside(world, ship, broadside, WeaponName.Right, aheadX, aheadY, 0 - aheadY, aheadX);
   }
 }
 

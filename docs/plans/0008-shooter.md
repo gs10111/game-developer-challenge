@@ -105,3 +105,9 @@ VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): EN-04 moves to "In progress" in docs/requirements.md with "U" in its Test column and `sim/systems/enemyIntent` in its Where cell; ARCHITECTURE.md gains the Shooter, its range rule and the armament; an as-built line goes to ADR-0006 (the Shooter's rule in the AI stage, judged at the start of the step, and the cannon-only armament).
 CARRIED TO LATER SLICES: the spawner, which calls `spawnChaser` and `spawnShooter` (EN-08 to EN-11) and has to weigh its minimum distance against the attack range, since a Shooter is stamped with a ready cannon and fires in its first step in range; steering around islands and the line-of-fire check (EN-07); the config schema, which must keep a Shooter's projectile range at or above its attack range and its facing band narrow enough to hit from the edge of the range; balancing, since within about 89 units a player at full speed circles faster than the default Shooter turns, so it fires only as the bearing sweeps through its band; the match slice, which stops enemies from firing at a destroyed player.
 ```
+
+## Outcome
+
+- Tests first: 22 new tests across the five subtasks, 211 in all. The red of every test was seen, by a missing rule or by temporary source edits undone by hand.
+- The full test audit and the rigorous review were not run: the owner asked to finish and deploy within the day on a limited budget, and from this slice on the work is done without agents. What stands in for them here is the plan review, the implementer's mutation proofs and the green lint, typecheck and tests.
+- Known gap: none of the six combat tests fails when a Shooter fires regardless of range; the range rule is pinned by the eight intent tests and by the replay.

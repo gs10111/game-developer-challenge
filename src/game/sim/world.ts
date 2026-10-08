@@ -1,4 +1,4 @@
-import type { GameConfig, Weapons } from '../config/gameConfig';
+import type { Armament, GameConfig } from '../config/gameConfig';
 import type { IslandIndex } from './collision/islandIndex';
 import type { Layer } from './collision/layers';
 import type { EventQueue } from './events';
@@ -8,6 +8,7 @@ import type { RandomSource } from './random';
 export const ShipKind = {
   Player: 'player',
   Chaser: 'chaser',
+  Shooter: 'shooter',
 } as const;
 
 export type ShipKind = (typeof ShipKind)[keyof typeof ShipKind];
@@ -28,6 +29,7 @@ export interface Ship {
   maxHealth: number;
   pendingDamage: number;
   contactDamage: number;
+  attackRange: number;
   exploded: boolean;
   thrust: 0 | 1;
   turn: -1 | 0 | 1;
@@ -37,7 +39,7 @@ export interface Ship {
   frontCooldown: number;
   leftCooldown: number;
   rightCooldown: number;
-  weapons: Weapons | null;
+  weapons: Armament | null;
 }
 
 export interface Projectile {
@@ -86,6 +88,7 @@ const FRESH_SHIP: Readonly<Ship> = Object.freeze({
   maxHealth: 0,
   pendingDamage: 0,
   contactDamage: 0,
+  attackRange: 0,
   exploded: false,
   thrust: 0,
   turn: 0,

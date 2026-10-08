@@ -559,4 +559,65 @@ describe('weapons (ADR-0005, ADR-0006)', () => {
     });
     expect(disarmed.player.x).toBeGreaterThan(1100);
   });
+
+  test('CB-07 a ship fitted with a front cannon only fires it on its cooldown and fires nothing from its sides', () => {
+    const trigger = { fireFront: 1, fireLeft: 1, fireRight: 1 } as const;
+    const cannonOnly = { front: testWeapons().front };
+    const berth = { x: 400, y: 400, heading: 128, radius: 20 };
+    const world = createMatch(buildConfig(), SEED);
+    const gunboat = launch(world, { ...berth, ...trigger, weapons: cannonOnly });
+
+    step(world, 0);
+
+    expect(eventsOf(world)).toStrictEqual([
+      { kind: 'shotFired', layer: null, weapon: 'front', x: 400, y: 424, directionX: 0, directionY: 1 },
+    ]);
+    expect(flying(world).map(course)).toEqual([{ x: 400, y: 429, directionX: 0, directionY: 1 }]);
+    expect(flying(world).map(stamp)).toEqual([
+      { speed: 300, radius: 4, damage: 20, remainingSteps: 119 },
+    ]);
+    expect(cooldowns(gunboat)).toEqual({ frontCooldown: 30, leftCooldown: 0, rightCooldown: 0 });
+
+    for (let index = 1; index < 100; index += 1) {
+      step(world, 0);
+
+      expect(cooldowns(gunboat)).toEqual({
+        frontCooldown: 30 - (index % 30),
+        leftCooldown: 0,
+        rightCooldown: 0,
+      });
+    }
+    expect(gunboat).toMatchObject({ active: true, ...trigger });
+    expect(gunboat.weapons).toBe(cannonOnly);
+
+    const held = createMatch(buildConfig(), SEED);
+    launch(held, { ...berth, ...trigger, weapons: cannonOnly });
+
+    expect(shotSteps(held, 200, () => 0)).toEqual({
+      front: [0, 30, 60, 90, 120, 150, 180],
+      left: [],
+      right: [],
+      created: [0, 30, 60, 90, 120, 150, 180],
+    });
+
+    const refitted = createMatch(buildConfig(), SEED);
+    const sloop = launch(refitted, {
+      ...berth,
+      ...trigger,
+      frontCooldown: 11,
+      leftCooldown: 7,
+      rightCooldown: 65,
+      weapons: cannonOnly,
+    });
+
+    expect(shotSteps(refitted, 5, () => 0)).toEqual({ front: [], left: [], right: [], created: [] });
+    expect(cooldowns(sloop)).toEqual({ frontCooldown: 6, leftCooldown: 2, rightCooldown: 60 });
+    expect(shotSteps(refitted, 125, () => 0)).toEqual({
+      front: [10, 40, 70, 100],
+      left: [],
+      right: [],
+      created: [10, 40, 70, 100],
+    });
+    expect(cooldowns(sloop)).toEqual({ frontCooldown: 1, leftCooldown: 0, rightCooldown: 0 });
+  });
 });

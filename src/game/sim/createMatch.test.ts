@@ -199,7 +199,7 @@ describe('match creation (ADR-0006)', () => {
         expect(snapshotParts).toContain(vertex);
       }
     }
-    expect(snapshotParts).toHaveLength(18);
+    expect(snapshotParts).toHaveLength(21);
     expect(snapshotParts.filter((part) => sourceParts.has(part))).toEqual([]);
     expect(snapshotParts.filter((part) => !Object.isFrozen(part))).toEqual([]);
 

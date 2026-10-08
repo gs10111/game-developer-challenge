@@ -28,7 +28,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | EN-01 | Chaser pursues the player | `sim/ai/pursuit`, `sim/systems/enemyIntent` | T5, U | In progress |
 | EN-02 | Chaser damages the player on contact and explodes on impact | `sim/systems/collision/chaserImpacts`, `sim/systems/damage` | T5, U | In progress |
 | EN-03 | A Chaser destroying itself on the player scores no point | `sim/systems/damage` | T4, T5, U | In progress |
-| EN-04 | Shooter approaches and fires only within the configured attack range | `sim/ai/shooter` | T5 | Pending |
+| EN-04 | Shooter approaches and fires only within the configured attack range | `sim/systems/enemyIntent`, `sim/spawnEnemy` | T5, U | In progress |
 | EN-05 | Enemies move and rotate with limited turn speed | `sim/systems/enemyIntent`, `sim/systems/movement` | T5, U | In progress |
 | EN-06 | Enemies take damage and have their own health | `sim/systems/damage` | T4, U | In progress |
 | EN-07 | Enemies respect island collision and steer around islands | `sim/ai/steering`, `sim/systems/collision` | T5 | Pending |

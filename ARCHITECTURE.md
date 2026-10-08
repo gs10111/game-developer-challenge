@@ -6,8 +6,8 @@ This document describes the system as it is built, and grows with each slice. Th
 
 | Layer | Path | Role | Built so far |
 | --- | --- | --- | --- |
-| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement, health and weapons, the Chaser |
-| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds, layers, hits, damage and score, ship kinds, the Chaser's pursuit and impact |
+| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement, health and weapons, the Chaser and the Shooter |
+| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds, layers, hits, damage and score, ship kinds, the Chaser's pursuit and impact, the Shooter's range and fire |
 | Loop | `src/game/loop` | Timing that drives the simulation | Fixed-step clock |
 | Render | `src/game/render` | PixiJS scene | Not yet |
 | Input | `src/game/input` | Keyboard and touch, sampled once per step | Not yet |
@@ -55,7 +55,7 @@ The player moves forward at the configured speed while the forward command is he
 
 ### Weapons and projectiles
 
-A ship carries its weapons, three fire intents and three cooldowns. The player's intents come from the command mask each step, so moving, turning and firing combine freely. Weapon parameters live in the config: cooldown, projectile speed, radius, lifetime and damage for the front cannon and for the broadside, plus the spacing between the broadside's three projectiles.
+A ship carries its armament, three fire intents and three cooldowns. An armament is a front cannon and, for the player, a broadside; a ship without a broadside ignores the side intents. The player's intents come from the command mask each step, so moving, turning and firing combine freely. Weapon parameters live in the config: cooldown, projectile speed, radius, lifetime and damage for the front cannon and for the broadside, plus the spacing between the broadside's three projectiles.
 
 Cooldowns and lifetimes are whole numbers of steps, never accumulated time, which keeps them exact and suspends them for free when the simulation is paused. Each step a weapon's cooldown drops by one; when it is zero and the command is set, the weapon fires and the cooldown starts again. A held command therefore fires on the first step and then exactly once per cooldown, and the front cannon and each broadside count on their own.
 
@@ -81,18 +81,25 @@ Three choices are worth stating:
 
 ### Enemies
 
-A ship carries a kind: the player, a Chaser, or none for a ship that tests place by hand. Enemy parameters live in the config under `enemies`; the Chaser has a radius, a speed, a turn rate, a health and a contact damage. `spawnChaser(world, x, y, heading)` takes a free ship from the pool and stamps it from the config the match was created with, and returns nothing when the pool is full. The spawner, still to come, will call it.
+A ship carries a kind: the player, a Chaser, a Shooter, or none for a ship that tests place by hand. Enemy parameters live in the config under `enemies`: both types have a radius, a speed, a turn rate and a health; the Chaser adds a contact damage, and the Shooter an attack range and a front cannon. `spawnChaser(world, x, y, heading)` and `spawnShooter(world, x, y, heading)` take a free ship from the pool and stamp it from the config the match was created with, and return nothing when the pool is full. The spawner, still to come, will call them.
 
 The enemy intent system runs right after the player's ([ADR-0016](docs/adr/0016-no-rust-webassembly.md)). For each Chaser it sets the thrust and picks a turn toward the player: none when the Chaser already faces the player within the angle it turns in one step, which keeps it from swinging from side to side; otherwise right or left, by the sign of the cross product between its heading and the direction to the player. No inverse trigonometry is involved. Movement then applies the Chaser's own speed and turn rate, which is what limits how fast it turns.
 
+The Shooter approaches the player like a Chaser until the distance between the two centres is within its attack range, and holds its position there. It keeps turning toward the player, and fires its front cannon when it is in range and faces the player within the same band; the weapons system then fires once per cooldown, as for any ship. Beyond its range it never fires, and it approaches again when the player leaves. Its shots are enemy shots: they hit only the player. It aims at where the player is, with no lead.
+
+Range and facing are judged where both ships start the step, because the enemy intent runs before movement. A shot therefore leaves in a step that began with the player in range, even when the player sails out of it in that same step.
+
+Two relations between the Shooter's numbers are pinned by tests of the defaults: a projectile travels at least as far as the attack range, 312 against 260, and a shot fired from the edge of the range by a Shooter anywhere inside its facing band still hits a still player.
+
 The Chaser impacts system runs in the collision stage, after the step's shots have been judged. A Chaser whose circle overlaps the player's explodes: its contact damage is banked on the player like a shot's, a hit is reported on the player at the point of contact, and the damage stage reports the Chaser's destruction and removes it without a point. A Chaser that only touches the player has not reached it.
 
-Four things are worth stating:
+Five things are worth stating:
 
 - A Chaser that the player's shots bring to zero in the very step it would reach the player does not explode: the player takes no damage and gets the point. One that is hit in that step but survives the shots still explodes, with no point.
 - Several Chasers that reach the player in one step each apply their damage.
 - A Chaser always moves forward, so while it turns it travels on a circle whose radius is its speed divided by its turn rate. If that circle were wider than the contact distance, the sum of the two radii, the Chaser could circle a still player for ever. The defaults keep it narrower, 39.4 against 42, and a test pins the relation.
-- The Chaser heads straight for the player. An island in the way holds it or makes it slide along the shore until the player moves; steering around islands comes next.
+- Both enemy types head straight for the player. An island in the way holds them or makes them slide along the shore until the player moves, and a Shooter fires at an island that stands between it and the player. Steering around islands and a line-of-fire check come later.
+- Ships do not block each other: enemies overlap one another, and a Shooter can sit on the player.
 
 ### Islands and collision
 
@@ -126,7 +133,7 @@ There is no backend. The MSW service worker starts before the first render in ev
 ## Current limitations
 
 - The arena size, the island layout, the player's start position and the movement values are provisional until the arena is drawn and the game is balanced.
-- Island polygons, speeds, weapon values and enemy values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, a non-positive cooldown, or a Chaser that turns wider than its contact distance would not be caught.
-- The Chaser is the only enemy type, and only tests spawn it: steering around islands, the Shooter and the spawner come next. Nothing ends the match yet, so a Chaser keeps pursuing a player whose health is at zero.
+- Island polygons, speeds, weapon values and enemy values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, a non-positive cooldown, a Chaser that turns wider than its contact distance, or a Shooter whose shots fall short of its attack range would not be caught.
+- Only tests spawn enemies: the spawner comes next. Nothing ends the match yet, so enemies keep pursuing and firing at a player whose health is at zero.
 - A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
 - Nothing is rendered yet: the rules above are exercised by unit tests only.

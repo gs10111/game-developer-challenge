@@ -18,6 +18,11 @@ export interface Weapons {
   readonly broadside: Weapon & { readonly spacing: number };
 }
 
+export interface Armament {
+  readonly front: Weapon;
+  readonly broadside?: Weapons['broadside'];
+}
+
 export interface GameConfig {
   readonly arena: {
     readonly width: number;
@@ -38,6 +43,14 @@ export interface GameConfig {
       readonly turnRateDegrees: number;
       readonly health: number;
       readonly contactDamage: number;
+    };
+    readonly shooter: {
+      readonly radius: number;
+      readonly speed: number;
+      readonly turnRateDegrees: number;
+      readonly health: number;
+      readonly attackRange: number;
+      readonly weapons: { readonly front: Weapon };
     };
   };
 }
@@ -109,6 +122,22 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
       turnRateDegrees: 160,
       health: 30,
       contactDamage: 25,
+    },
+    shooter: {
+      radius: 22,
+      speed: 70,
+      turnRateDegrees: 90,
+      health: 40,
+      attackRange: 260,
+      weapons: {
+        front: {
+          cooldownSeconds: 1.6,
+          projectileSpeed: 260,
+          projectileRadius: 5,
+          projectileLifetimeSeconds: 1.2,
+          damage: 10,
+        },
+      },
     },
   },
 };
