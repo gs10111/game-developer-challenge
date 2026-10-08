@@ -314,6 +314,7 @@ export function MatchScreen({ ticket, onFinished, onPlayAgain, onExit }: MatchSc
           </div>
         </div>
       )}
+      <p className="rotate-notice">Turn your device sideways for a larger arena.</p>
       <p className="controls-hint">
         W or ↑ sail · A/D or ←/→ turn · Space front cannon · Q/E broadsides · P pause
       </p>

@@ -379,10 +379,16 @@ tr.own {
   }
 }
 
+.rotate-notice {
+  display: none;
+  margin: 0.4rem 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 @media (orientation: portrait) and (max-width: 40rem) {
-  .controls-hint::after {
+  .rotate-notice {
     display: block;
-    content: 'Turn your device sideways for a larger arena.';
   }
 }
 
