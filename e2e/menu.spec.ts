@@ -72,3 +72,23 @@ test('RK-02 an empty history and a failing ranking are shown as such, and the ga
 
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
 });
+
+test('MSW-11 without a service worker the same handlers answer in the page', async ({ page }) => {
+  const rankingRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/ranking')) {
+      rankingRequests.push(request.url());
+    }
+  });
+
+  await page.goto('/?mock=in-page');
+  await page.getByRole('tab', { name: 'Ranking' }).click();
+
+  await expect(page.getByRole('cell', { name: 'Blackbeard' })).toBeVisible();
+  await expect(page.getByTestId('mock-transport')).toContainText('answer in the page');
+  expect(rankingRequests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  await expect(page.getByTestId('page-indicator')).toHaveText('Page 2 of 4');
+});

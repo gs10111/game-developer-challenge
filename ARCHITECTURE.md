@@ -161,6 +161,7 @@ There is no backend. The MSW service worker starts before the first render in ev
 - Queries (`src/api/matches.ts`): Axios with a 6 s timeout, TanStack Query with the page in the query key, the previous page kept while the next loads, two retries, and a refetch every time a tab is shown. A response to a superseded request is discarded by its key and its abort signal.
 - Outbox (`src/api/outbox.ts`): a finished match is written to a persisted list first and then sent with `PUT /api/matches/{matchId}`, which is idempotent. Success removes it and invalidates the ranking and the history; failure after the retries marks it, and the player can try again. Pending records are sent again when the app loads ([ADR-0013](docs/adr/0013-match-submission-outbox.md)). An abandoned match never reaches the list.
 - Mock (`src/mocks`): the handlers keep confirmed records in `localStorage`, add fixtures for other players and consult the selected scenario on every request ([ADR-0011](docs/adr/0011-network-scenarios-via-msw.md)).
+- Fallback (`src/mocks/inPage.ts`): at start-up the app asks `GET /api/health`. When the answer is not the one of the mock, an Axios adapter hands every request to the same MSW handlers through `getResponse`, in the page, with the timeout and the cancellation of the client reproduced. A static host answers unknown paths with `index.html`, so without this a browser that blocks service workers would show every list as failed.
 
 ## Current limitations
 

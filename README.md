@@ -116,6 +116,8 @@ The **Mock API scenarios** panel at the bottom of the menu selects how the mock 
 
 Latencies are fixed numbers, never random, so tests are reproducible.
 
+When the service worker cannot answer, because the browser blocks service workers or the host puts something in front of the worker script, the app notices at start-up that `GET /api/health` did not come back from the mock and routes its Axios calls to the same handlers inside the page. Contracts, fixtures, scenarios and stored records are the same; the panel says which of the two is answering. `/?mock=in-page` forces this mode.
+
 ## Tests
 
 - Unit tests (Vitest) cover the simulation: movement, weapons, collisions, damage, both enemy types, the spawner, the match rules and replays from a seed.

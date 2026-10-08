@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { forgetLocalRecords, retryAllMatches } from '../api/outbox';
 import { resetDb } from '../mocks/db';
+import { servedInPage } from '../mocks/inPage';
 import { currentScenario, SCENARIO_LABELS, SCENARIOS, selectScenario } from '../mocks/scenarios';
 import type { Scenario } from '../mocks/scenarios';
 
@@ -26,6 +27,11 @@ export function MockPanel({ onReset }: MockPanelProps) {
       <summary>Mock API scenarios</summary>
       <p className="hint">
         Ranking and history are served by a mock in the browser. Choose how it behaves.
+      </p>
+      <p className="hint" data-testid="mock-transport">
+        {servedInPage()
+          ? 'No service worker is available here, so the same handlers answer in the page.'
+          : 'A service worker answers the requests.'}
       </p>
       <label htmlFor={selectId}>Scenario</label>
       <select
