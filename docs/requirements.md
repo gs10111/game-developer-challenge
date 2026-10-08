@@ -205,7 +205,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | --- | --- | --- | --- | --- |
 | PF-01 | Combat measured in an optimised build, 60 FPS target on a documented reference machine | `vite build` + `preview` | report | In progress |
 | PF-02 | FPS, p95 frame time and entity count over a three-minute match | `game/runtime/perf`, `docs/performance.md` | report + JSON | In progress |
-| PF-03 | Memory after five start, play and exit cycles, investigating continuous growth | `docs/performance.md` | heap chart | In progress |
+| PF-03 | Memory after five start, play and exit cycles, investigating continuous growth | `docs/performance.md` | heap chart | Done |
 | PF-04 | Hardware, browser, resolution, match config and observed limitations | `docs/performance.md` | Doc | In progress |
 
 ## Delivery (Challenge 11)

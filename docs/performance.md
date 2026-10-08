@@ -1,6 +1,6 @@
 # Performance report
 
-Status: **one run is measured**, a two-minute match on the published build. Still missing: the three-minute match the challenge asks for, the five cycles of the memory check, and the hardware of the machine that ran it.
+Status: **two runs are measured** on the published build, a two-minute match and the five cycles of the memory check. Still missing: the three-minute match the challenge asks for, and the hardware of the machine that ran them.
 
 ## What is measured
 
@@ -21,14 +21,14 @@ The code is in `src/game/runtime/perf.ts`; the percentiles are nearest-rank and 
 2. For the three-minute match, open `/?perf=1&duration=180&seed=7`, press **Play**, keep its window visible and copy the report from the result dialog. `duration` sets the session time of benchmark matches, in seconds, without touching the saved options.
 3. For the memory check, open `/?perf=1&duration=60&cycles=5&seed=7` and press **Play** once. Five matches run in a row: when one ends, the app leaves the match screen, which destroys the session, and starts the next by itself. The report of the fifth lists the heap of all five.
 
-## Environment of the measured run
+## Environment of the measured runs
 
 | Item | Value |
 | --- | --- |
 | Hardware | Not reported |
 | Operating system | Windows, 64-bit (the browser reports NT 10.0, which is Windows 10 or 11) |
 | Browser | Microsoft Edge 154 (Chromium 154) |
-| Window | Viewport of 436 by 610 CSS pixels, device pixel ratio 1 |
+| Window | Viewport of 436 by 610 CSS pixels in the two-minute match and of 1358 by 610 in the five cycles; device pixel ratio 1 |
 | Canvas | 1024 by 576 pixels, scaled down by CSS to fit the window |
 | Build | The published production build |
 | Match config | Defaults: session time 120 s, an enemy every 3 s, at most 10 enemies alive; seed 7; benchmark pilot |
@@ -87,18 +87,24 @@ Not measured yet. The run above used the default session time of 120 seconds; th
 
 ## Five cycles of start, play and exit
 
-Not measured yet. The run above is a single match, in which the heap grew by 1.46 MB; one match cannot show whether memory keeps growing from one cycle to the next.
+Measured with `/?perf=1&duration=60&cycles=5&seed=7`: five matches of 60 seconds in a row. Between two matches the app leaves the match screen, which destroys the session, and starts the next one. The window was 1358 by 610 CSS pixels, in Edge 154, on the published build.
 
-| Cycle | Heap at start (MB) | Heap at end (MB) |
-| --- | --- | --- |
-| 1 | 12.0 | 13.46 |
-| 2 | _not measured_ | _not measured_ |
-| 3 | _not measured_ | _not measured_ |
-| 4 | _not measured_ | _not measured_ |
-| 5 | _not measured_ | _not measured_ |
+| Cycle | Heap at start (MB) | Heap at end (MB) | Frames per second | 95th percentile | Frames slower than 33 ms |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 10.99 | 12.10 | 59.82 | 17.0 ms | 3 of 3,593 |
+| 2 | 13.86 | 12.02 | 58.31 | 19.3 ms | 35 of 3,499 |
+| 3 | 14.35 | 12.97 | 59.94 | 17.0 ms | 2 of 3,597 |
+| 4 | 14.31 | 12.67 | 59.98 | 16.9 ms | 0 of 3,599 |
+| 5 | 14.17 | 12.40 | 59.95 | 16.9 ms | 0 of 3,598 |
 
-What to look for: a heap at the start of each cycle that keeps growing by a similar amount would mean something survives the exit. Leaving a match destroys the PixiJS application with its ticker and display objects and removes the keyboard, blur and visibility listeners; the textures stay in the asset cache on purpose and are reused by the next match.
+Reading:
 
+- No continuous growth. The heap at the start of a match rises once, from 11.0 MB in the first cycle to 13.9 MB in the second, and then stays between 14.2 and 14.4 MB, a little lower in each of the last three cycles. The heap at the end stays between 12.0 and 13.0 MB. What is added after the first match is kept once and reused: the textures in the asset cache and the compiled code.
+- Every match ends with less heap than the next one starts with, and from the second cycle on with less than it started with itself, so the garbage collector reclaims what a match allocates while the match runs.
+- Live entities are the same in every cycle, about 5 ships and 2 projectiles on average, 8 and 9 at most, as expected from the same seed and the same pilot.
+- The second cycle was disturbed: 35 frames slower than 33 ms and a 99th percentile of 33.9 ms, against 0 to 3 slow frames in the other four. The machine was being used for other work during the run, in another window; the cause of that cycle was not investigated.
+
+Leaving a match destroys the PixiJS application with its ticker and display objects and removes the keyboard, blur and visibility listeners; the textures stay in the asset cache on purpose and are reused by the next match.
 ## What the design expects
 
 The cost model of [ADR-0015](adr/0015-average-case-performance-model.md) puts a simulation step at about a thousand cheap operations for 20 enemies and 60 projectiles, far below one percent of a 16.7 ms frame. Rendering is one sprite per live entity, a tiling sprite for the water and about fifty static island tiles, with no per-frame allocation in the simulation or in the views.
