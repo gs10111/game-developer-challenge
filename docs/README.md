@@ -13,7 +13,7 @@
 
 ## Status at delivery
 
-Of the 136 requirements of the matrix, 126 are built, 9 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
+Of the 136 requirements of the matrix, 127 are built, 8 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
 
 ### Built
 
@@ -34,7 +34,6 @@ Of the 136 requirements of the matrix, 126 are built, 9 are partly built and 1 i
 | PW-01 | Twelve E2E tests for the main flows | The cases listed per flow in [requirements.md](requirements.md): flows T2 and T12 have no test, T3 to T7 and T9 to T11 are partial |
 | PF-01 to PF-04, DL-06 | The test report, the benchmark run behind `?perf=1`, the method, and one two-minute run on the published build: 59.9 frames per second on average, 17.2 ms at the 95th percentile | The three-minute run, the five cycles of the memory check, the hardware of the machine, draw calls and heap snapshots |
 | API-12 | A late response cannot overwrite newer data: the page is in the query key and requests carry an abort signal | A test that shows it |
-| SC-16 | The menu uses the title and the background of the asset pack, and the HUD its icons | Buttons, panels and the health meter are plain CSS, not the supplied sprites |
 
 Outside the matrix: only the two options and the captain name are validated, not the whole game config.
 

@@ -4,13 +4,15 @@ const MUTED_KEY = 'pirate-battle.muted';
 const VOICES_PER_SOUND = 4;
 const VOLUME = 0.4;
 
-export type SoundName = 'cannon' | 'broadside' | 'hit' | 'explosion';
+export type SoundName = 'cannon' | 'broadside' | 'hit' | 'explosion' | 'victory' | 'defeat';
 
 const FILES: Readonly<Record<SoundName, string>> = {
   cannon: 'cannon_fire_1',
   broadside: 'cannon_broadside',
   hit: 'ship_wood_hit_1',
   explosion: 'ship_explosion_1',
+  victory: 'game_complete',
+  defeat: 'game_over',
 };
 
 export interface Sounds {

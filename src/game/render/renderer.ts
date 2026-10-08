@@ -24,6 +24,10 @@ const MAXIMUM_RESOLUTION = 2;
 const ENEMY_SHOT_TINT = 0xff8a65;
 const HIT_TINT = 0xff7b7b;
 const PLAIN_TINT = 0xffffff;
+const VEIL_SECONDS = 0.3;
+const VEIL_ALPHA = 0.3;
+const SHAKE_SECONDS = 0.25;
+const SHAKE_PIXELS = 5;
 
 const SHIP_FRAMES: Readonly<Record<string, readonly number[]>> = {
   [ShipKind.Player]: [1, 7, 13],
@@ -155,7 +159,19 @@ export async function createRenderer(
   const shipLayer = new Container();
   const shotLayer = new Container();
   const effectLayer = new Container();
-  app.stage.addChild(water, buildIslands(config, textures), shotLayer, shipLayer, effectLayer);
+  const veil = new Graphics().rect(0, 0, width, height).fill({ color: 0xc0392b });
+  veil.alpha = 0;
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let veilSeconds = 0;
+  let shakeSeconds = 0;
+  app.stage.addChild(
+    water,
+    buildIslands(config, textures),
+    shotLayer,
+    shipLayer,
+    effectLayer,
+    veil,
+  );
 
   const shipViews = Array.from({ length: SHIP_POOL_CAPACITY }, () => {
     const view = createShipView();
@@ -294,6 +310,10 @@ export async function createRenderer(
       } else if (event.kind === EventKind.Hit) {
         startEffect(EffectStyle.Spark, event.x, event.y, 0);
         flashNearestShip(event, world);
+        if (event.layer === Layer.Player) {
+          veilSeconds = VEIL_SECONDS;
+          shakeSeconds = calm ? 0 : SHAKE_SECONDS;
+        }
       } else {
         startEffect(EffectStyle.Explosion, event.x, event.y, 0);
       }
@@ -322,6 +342,14 @@ export async function createRenderer(
         }
       });
       advanceEffects(elapsedSeconds);
+      veilSeconds = Math.max(0, veilSeconds - elapsedSeconds);
+      veil.alpha = (veilSeconds / VEIL_SECONDS) * VEIL_ALPHA;
+      shakeSeconds = Math.max(0, shakeSeconds - elapsedSeconds);
+      const reach = (shakeSeconds / SHAKE_SECONDS) * SHAKE_PIXELS;
+      app.stage.position.set(
+        Math.sin(shakeSeconds * 90) * reach,
+        Math.cos(shakeSeconds * 70) * reach,
+      );
     },
     destroy() {
       app.destroy({ removeView: true }, { children: true, texture: false });

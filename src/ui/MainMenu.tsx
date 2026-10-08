@@ -51,10 +51,32 @@ export function MainMenu({
 
   return (
     <main className="menu">
+      <div className="frame">
       <h1>
         <img src={`${assets}title_pirate_battle.png`} alt="Pirate Battle" width={384} height={128} />
       </h1>
-      <div className="tabs" role="tablist" aria-label="Main menu">
+      <p className="tagline">Set sail. Take command.</p>
+      <div
+        className="tabs"
+        role="tablist"
+        aria-label="Main menu"
+        onKeyDown={(event) => {
+          const index = TABS.findIndex(({ id }) => id === tab);
+          const last = TABS.length - 1;
+          const moves: Partial<Record<string, number>> = {
+            ArrowRight: index === last ? 0 : index + 1,
+            ArrowLeft: index === 0 ? last : index - 1,
+            Home: 0,
+            End: last,
+          };
+          const target = TABS[moves[event.key] ?? -1];
+          if (target !== undefined) {
+            event.preventDefault();
+            setTab(target.id);
+            document.getElementById(`tab-${target.id}`)?.focus();
+          }
+        }}
+      >
         {TABS.map(({ id, label }) => (
           <button
             key={id}
@@ -62,6 +84,7 @@ export function MainMenu({
             role="tab"
             id={`tab-${id}`}
             aria-selected={tab === id}
+            tabIndex={tab === id ? 0 : -1}
             aria-controls="menu-panel"
             onClick={() => {
               setTab(id);
@@ -138,6 +161,7 @@ export function MainMenu({
           />
         )}
         {tab === 'history' && <HistoryPanel playerId={playerId} />}
+      </div>
       </div>
       <MockPanel onReset={onReset} />
     </main>

@@ -159,6 +159,7 @@ export async function createGameSession(options: SessionOptions): Promise<GameSe
     if (match.outcome !== null && phase !== 'ended') {
       phase = 'ended';
       clear(commands);
+      sounds.play(match.outcome === 'defeated' ? 'defeat' : 'victory');
       publish();
       options.onEnd({
         score: world.score,

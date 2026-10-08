@@ -97,7 +97,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | SC-13 | Refresh or leaving the combat screen ends the running match | `game/runtime/session` | T9 | Done |
 | SC-14 | An abandoned match is not recorded in ranking or history | `api/outbox` | T9 | Done |
 | SC-15 | Interface, code identifiers and documentation in English | whole project | review | Done |
-| SC-16 | Menu visual identity consistent with the assets | `ui/styles.css` | visual | In progress |
+| SC-16 | Menu visual identity consistent with the assets | `ui/styles.css` | visual | Done |
 
 ## PixiJS and architecture (Challenge 4)
 

@@ -13,13 +13,13 @@ That repository states no licence for the assets. They are used here as its stat
 | `explosion_1.png`, `explosion_2.png`, `explosion_3.png`, `fire_1.png` | `assets/png/default/effects/` |
 | `tile_1`, `tile_2`, `tile_3`, `tile_17`, `tile_18`, `tile_19`, `tile_33`, `tile_34`, `tile_35`, `tile_73` (`.png`) | `assets/png/default/tiles/` |
 | `icon_heart.png`, `icon_score.png`, `icon_time.png` | `assets/png/default/ui/hud/` |
-| `title_pirate_battle.png` | `assets/png/default/ui/menu/` |
+| `title_pirate_battle.png`, `panel_menu.png`, `button_primary_normal.png`, `button_primary_pressed.png`, `button_secondary_normal.png`, `button_secondary_pressed.png` | `assets/png/default/ui/menu/` |
 | `ui_scene_background.png` | `assets/` |
-| `sounds/cannon_fire_1.wav`, `sounds/cannon_broadside.wav`, `sounds/ship_wood_hit_1.wav`, `sounds/ship_explosion_1.wav` | `assets/sounds/` |
+| `sounds/cannon_fire_1.wav`, `sounds/cannon_broadside.wav`, `sounds/ship_wood_hit_1.wav`, `sounds/ship_explosion_1.wav`, `sounds/game_complete.wav`, `sounds/game_over.wav` | `assets/sounds/` |
 
 ## Fonts
 
-No font file is shipped. The interface uses the serif font of the system (Georgia, then Times New Roman).
+No font file is shipped. The interface uses sans-serif fonts of the system (Trebuchet MS, then Segoe UI, then Verdana).
 
 ## Libraries
 

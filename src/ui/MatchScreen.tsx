@@ -119,7 +119,7 @@ function Hud({ session }: { session: GameSession }) {
           {formatClock(remainingSeconds)}
         </output>
       </span>
-      <span className="hud-item">
+      <span className="hud-item" data-low={health * 3 <= maximumHealth}>
         <img className="hud-icon" src={`${assets}icon_heart.png`} alt="" />
         <label htmlFor={healthId}>Health</label>
         <meter
