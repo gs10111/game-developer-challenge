@@ -24,6 +24,42 @@ The **Options** tab sets the game session time, from 60 to 180 whole seconds, an
 
 On a phone the game is meant to be played in landscape; the arena keeps its 16:9 shape and always fits the screen.
 
+## Gameplay configuration
+
+Every gameplay value is in one typed object, `DEFAULT_GAME_CONFIG` in `src/game/config/gameConfig.ts`. A match copies and freezes the config when it starts, so a change reaches only the next match, and no system holds a number of its own: balancing is editing this file. Distances are in arena units, the arena being 1024 by 576.
+
+| Group | Values |
+| --- | --- |
+| Match | Duration 120 s. Set in Options, from 60 to 180 s |
+| Spawn | An enemy every 3 s (set in Options, from 0.5 to 10 s), in the repeating order Chaser, Shooter, Chaser; at least 320 units from the player; at most 10 enemies alive |
+| Player | Radius 24, speed 140 per second, turn 150 degrees per second, health 100 |
+| Front cannon | Cooldown 0.5 s, one projectile of radius 5 at 420 per second for 1 s (range 420), damage 20 |
+| Broadside, each side | Cooldown 1.5 s, three parallel projectiles 14 apart, radius 5, at 360 per second for 0.8 s (range 288), damage 15 each |
+| Chaser | Radius 18, speed 110, turn 160 degrees per second, health 30, contact damage 25 |
+| Shooter | Radius 22, speed 70, turn 90 degrees per second, health 40, attack range 260; cannon with cooldown 1.6 s, projectile of radius 5 at 260 per second for 1.2 s (range 312), damage 10 |
+| Arena | 1024 by 576, with four islands made of five rectangles |
+
+The reasons for these numbers are in the Balancing section of [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Reproducing failures
+
+Network failures are scenarios of the mock. Choose one in the **Mock API scenarios** panel at the bottom of the menu, or in the address; **Restore initial data** in the same panel clears the stored records and goes back to `success`.
+
+| To see | Do |
+| --- | --- |
+| A list that fails and recovers | Open `/?scenario=server-error` and the Ranking tab: after two retries it shows the error and **Try again**. Choose `Success` in the panel and try again |
+| An empty list | Open `/?scenario=empty` and either tab |
+| A record that cannot be saved | Open `/?scenario=save-unavailable`, finish a match: the result shows "Not saved yet". The menu then says a match is waiting. Choose `Success`, or reload with `/?scenario=success`: the record is sent and appears once in Match History |
+| A timeout after the server saved | Open `/?scenario=timeout-after-save` and finish a match: the first answer never arrives, the client gives up after 6 s and sends again, and the record appears once |
+| Slow and out-of-order answers | Open `/?scenario=slow` or `/?scenario=jitter` and move between the pages of the ranking quickly: the page shown is always the one asked for last |
+| The app without a service worker | Open `/?mock=in-page`: the same handlers answer in the page |
+| Assets that fail to load | In the developer tools, block the requests to `*/assets/*.png`, press **Play**: the match screen shows the failure and **Try again**. Unblock and try again |
+
+To finish a match at once for the recipes above, add `e2e=1` to the address (`/?e2e=1&scenario=save-unavailable`), press **Play** and run `pirateBattle.advance(7200)` in the console: a ship that does nothing is sunk in about twenty seconds of game time.
+
+A match can be repeated: `?seed=<number>` fixes the points where enemies appear, and with the same inputs the same seed gives the same match. `pirateBattle.snapshot()` shows the state of the match at any moment.
+
+A failed E2E test leaves a trace. In CI, download the `playwright-report` artifact of the run and open `index.html`; locally, after a run in the container, `pnpm exec playwright show-report` opens the report and each failed test links to its trace. The results of the last run are in [docs/test-report.md](docs/test-report.md).
 ## Requirements
 
 | To | You need |
@@ -121,6 +157,8 @@ Latencies are fixed numbers, never random, so tests are reproducible.
 When the service worker cannot answer, because the browser blocks service workers or the host puts something in front of the worker script, the app notices at start-up that `GET /api/health` did not come back from the mock and routes its Axios calls to the same handlers inside the page. Contracts, fixtures, scenarios and stored records are the same; the panel says which of the two is answering. `/?mock=in-page` forces this mode.
 
 ## Tests
+
+The results of the last run are in [docs/test-report.md](docs/test-report.md).
 
 - Unit tests (Vitest) cover the simulation: movement, weapons, collisions, damage, both enemy types, the spawner, the match rules and replays from a seed.
 - E2E tests (Playwright, desktop and mobile Chromium) drive the real controls against the production build. With `?e2e=1` the page exposes `window.pirateBattle`, which reads the state of the match and is then the only thing that advances the simulation, by whole steps; the rules, inputs, collisions and rendering are the real ones.

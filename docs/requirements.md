@@ -215,7 +215,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | DL-00 | Time estimate sent before starting | email to the recruiter | Done |
 | DL-01 | Repository with source, lockfile, assets, mocks, fixtures and tests | repository | Done |
 | DL-02 | Public, working deploy matching the delivered code, with mocks active on open and reload | Vercel, `vercel.json` | Done |
-| DL-03 | README with setup, environment variables, controls, gameplay config, scenario selection and reset, commands and how to reproduce failures | `README.md` | In progress |
+| DL-03 | README with setup, environment variables, controls, gameplay config, scenario selection and reset, commands and how to reproduce failures | `README.md` | Done |
 | DL-04 | Commands for dev, build, preview, lint, typecheck and Playwright | `package.json`, `compose.yaml` | Done |
 | DL-05 | ARCHITECTURE covering React/PixiJS integration, simulation loop, collisions, resources, local persistence, ranking and history (contracts, cache, pending records), limitations and balancing | `ARCHITECTURE.md` | Done |
 | DL-06 | Test and profiling reports included | `docs/performance.md`, CI artifacts | In progress |

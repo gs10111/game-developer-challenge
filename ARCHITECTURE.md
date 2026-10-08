@@ -163,6 +163,17 @@ There is no backend. The MSW service worker starts before the first render in ev
 - Mock (`src/mocks`): the handlers keep confirmed records in `localStorage`, add fixtures for other players and consult the selected scenario on every request ([ADR-0011](docs/adr/0011-network-scenarios-via-msw.md)).
 - Fallback (`src/mocks/inPage.ts`): at start-up the app asks `GET /api/health`. When the answer is not the one of the mock, an Axios adapter hands every request to the same MSW handlers through `getResponse`, in the page, with the timeout and the cancellation of the client reproduced. A static host answers unknown paths with `index.html`, so without this a browser that blocks service workers would show every list as failed.
 
+## Balancing
+
+The default values are a first balance, chosen by reasoning and by a few matches, not tuned over many sessions. What they aim for:
+
+- Moving is always an answer. The player sails at 140, a Chaser at 110 and a Shooter at 70, so the player can open distance from anything, while a ship that stands still and does nothing is sunk in about twenty seconds.
+- Two hits sink a Chaser: its health is 30 against 20 of the front cannon and 15 of each broadside projectile. A Shooter, at 40, takes two front shots or three broadside projectiles.
+- The broadside trades reach and rhythm for weight: three projectiles of 15 every 1.5 s with a range of 288, against one of 20 every 0.5 s with a range of 420. It rewards coming alongside an enemy.
+- A Chaser costs a quarter of the health of the player, 25 of 100, and gives no point when it blows itself up, so letting Chasers through is a way to lose and not a way to score. A shot of a Shooter costs 10 every 1.6 s.
+- A Chaser cannot circle the player for ever: its turning circle, 39.4, is narrower than the distance at which the two hulls meet, 42.
+- Enemies never appear on top of the player: the minimum spawn distance, 320, is beyond the attack range of a Shooter, 260, and leaves more than two seconds before a Chaser arrives. The shots of a Shooter travel 312, so they reach anything inside its range.
+- The order Chaser, Shooter, Chaser gives two rushing enemies for each one that keeps its distance. With an enemy every 3 s and at most 10 alive, a match of 120 s brings up to 40 enemies.
 ## Current limitations
 
 - The arena layout and the gameplay values are a first balance.
