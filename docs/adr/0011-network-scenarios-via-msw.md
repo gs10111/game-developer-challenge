@@ -27,6 +27,7 @@ The challenge requires success, empty, paginated, slow, out-of-order, timeout, 4
 
 - Easier: any failure seen in a test can be reproduced in the published build with the same query parameter.
 - Harder: scenario state must reset between tests (PW-06).
+- As built: a scenario is selected with `?scenario=<name>` or in the Mock API scenarios panel of the menu, which also restores the initial data; the choice is kept in `localStorage`. There is no `window.__msw`. Latencies are fixed numbers and the `jitter` scenario cycles through four of them, so the mock has no random generator. Tests select scenarios through the address.
 - Revisit: if a real backend is added, keep the scenarios as contract fixtures.
 
 ## Sources

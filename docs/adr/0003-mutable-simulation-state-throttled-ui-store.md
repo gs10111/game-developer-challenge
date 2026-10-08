@@ -28,6 +28,7 @@ The combat state changes every simulation step. The React UI only needs a few va
 
 - Easier: the React Profiler shows renders only on score, timer-second and screen changes, which is direct evidence for AR-04.
 - Harder: anything React shows must be explicitly published; forgetting it shows stale data.
+- As built: the store is created per session and holds the phase, health, score, whole seconds left and outcome. It is written when one of them changes, with no 100 ms timer: they change a few times per second at most.
 - Revisit: if a HUD value needs sub-second precision, render it inside the canvas instead of raising the publish rate.
 
 ## Sources

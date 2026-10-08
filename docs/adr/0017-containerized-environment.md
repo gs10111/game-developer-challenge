@@ -81,6 +81,7 @@ Outside the container:
 - Easier: the everyday loop stays native and fast; baselines never depend on a developer machine; CI runs the README commands verbatim; a reviewer needs only Docker to test, build and open the production build.
 - Harder: lint, typecheck and unit tests can run in two environments. The container result is the one that counts, and CI enforces it.
 - Harder: the first pull is large, because the image carries Chromium, Firefox and WebKit and only Chromium is used; every container command pays for an install check; upgrading Playwright changes `package.json` and the `Dockerfile` together.
+- As built: the container runs lint, typecheck, unit and E2E tests in CI on every push, which is where it has been proven. It never ran on the development host, where Docker did not start, so E2E tests were only ever run in CI. `.nvmrc` pins the major version only.
 - Revisit: if the image size dominates CI time, cache the image between runs before considering a second image. If WebGL output differs between runners, apply the ADR-0010 fallback of a software renderer for the visual project.
 
 ## Sources

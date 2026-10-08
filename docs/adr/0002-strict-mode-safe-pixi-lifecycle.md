@@ -53,6 +53,7 @@ destroy(): void {
 
 - Easier: every exit path calls the same `destroy()`, so T9 (abandon and repeated navigation) and the five-cycle memory check (PF-03) exercise one code path.
 - Harder: code that runs after `await` inside `init()` must not assume the component is still mounted; it only prepares state that `destroy()` knows how to release.
+- As built: there is no `GameApp` class. `createGameSession` is an async factory; the effect in `src/ui/MatchScreen.tsx` marks a creation still in flight as cancelled and destroys it when it resolves. Listeners are removed one by one in `destroy`, without an `AbortController`, and the loop runs on the PixiJS ticker, which `app.destroy` stops. Textures stay in the `Assets` cache, as decided.
 - Revisit: if memory grows across cycles, check `Assets` cache growth first, then GPU texture sources.
 
 ## Sources

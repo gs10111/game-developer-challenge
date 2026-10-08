@@ -43,6 +43,7 @@ export type MatchRecord = z.infer<typeof MatchRecord>;
 
 - Easier: a contract change fails `tsc` in the client, the handlers and the fixtures at once.
 - Harder: schema and fixture updates travel together in every API change.
+- As built: a record is `matchId`, `playerId`, `playerName`, `finishedAt`, `score`, `durationSeconds`, `endReason` (`timeUp` or `defeated`) and `config`, in `src/api/contracts.ts`, shared by the client and the handlers. Stored options, the outbox and the last result are read with `safeParse` and fall back to defaults. Not built: a schema for the whole game config (only the two options and the name are validated), a version in the outbox schema, the unit test that validates every fixture and the rule that a `ZodError` is not retried.
 - Revisit: if bundle size becomes a constraint, switch imports to `zod/mini`.
 
 ## Sources

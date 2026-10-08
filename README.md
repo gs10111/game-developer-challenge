@@ -4,7 +4,7 @@ A top-down 2D naval shooter built with React, TypeScript and PixiJS for the Jung
 
 The game is playable: a match against Chasers and Shooters among islands, with keyboard and touch controls, pause, a result screen, a ranking and a match history served by a mock API.
 
-[docs/requirements.md](docs/requirements.md) lists every requirement with its status, [docs/adr/](docs/adr/README.md) records the architecture decisions, and [ARCHITECTURE.md](ARCHITECTURE.md) describes the system as built.
+[docs/README.md](docs/README.md) says what is built and what is not. [docs/requirements.md](docs/requirements.md) lists every requirement with its status, [docs/adr/](docs/adr/README.md) records the architecture decisions, and [ARCHITECTURE.md](ARCHITECTURE.md) describes the system as built.
 
 ## Play
 

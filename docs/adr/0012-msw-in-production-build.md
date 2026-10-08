@@ -44,6 +44,7 @@ void enableMocking().then(() => {
 
 - Easier: one code path everywhere.
 - Harder: the first load waits for worker registration, so the loading screen covers it.
+- As built: the worker starts as decided, and the app then checks that `GET /api/health` is answered by the mock. When it is not, because the browser blocks service workers or the host stands in front of the worker script, an Axios adapter answers with the same handlers in the page (`src/mocks/inPage.ts`). This was added after the first deploy showed the ranking as failed. Not built: the post-deploy smoke test.
 - Revisit: when a real API exists, gate the worker behind an explicit `VITE_USE_MOCKS` flag instead of the build mode.
 
 ## Sources

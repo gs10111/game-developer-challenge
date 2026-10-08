@@ -11,7 +11,7 @@ test('MSW-11 the production build serves the ranking from the mock API', async (
   await expect(page.getByRole('cell', { name: 'Blackbeard' })).toBeVisible();
 });
 
-test('UX-01 the options are validated, saved and kept after a refresh', async ({ page }) => {
+test('SC-02 the options are validated, saved and kept after a refresh', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('tab', { name: 'Options' }).click();
   const sessionTime = page.getByLabel('Game session time (seconds)');
@@ -38,7 +38,7 @@ test('UX-01 the options are validated, saved and kept after a refresh', async ({
   await expect(page.getByLabel('Enemy spawn time (seconds)')).toHaveValue('2.5');
 });
 
-test('RK-01 the ranking is paginated and ordered by score', async ({ page }) => {
+test('API-02 the ranking is paginated and ordered by score', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('tab', { name: 'Ranking' }).click();
 
@@ -52,7 +52,7 @@ test('RK-01 the ranking is paginated and ordered by score', async ({ page }) => 
   await expect(page.locator('tbody tr').first().locator('td').first()).toHaveText('6');
 });
 
-test('RK-02 an empty history and a failing ranking are shown as such, and the game stays reachable', async ({
+test('API-09 an empty history and a failing ranking are shown as such, and the game stays reachable', async ({
   page,
 }) => {
   await page.goto('/?scenario=empty');

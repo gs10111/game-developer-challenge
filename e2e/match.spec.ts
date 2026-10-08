@@ -137,7 +137,7 @@ test('MT-03 a match that ends shows its result, saves one record and survives a 
   await expect(page.locator('tbody tr')).toHaveCount(1);
 });
 
-test('MSW-07 a record that cannot be saved stays pending and is saved after the API recovers', async ({
+test('MSW-08 a record that cannot be saved stays pending and is saved after the API recovers', async ({
   page,
 }) => {
   await startMatch(page, '&scenario=save-unavailable');

@@ -28,6 +28,7 @@ A plain TypeScript `GameApp` class owns the PixiJS `Application`, the simulation
 
 - Easier: the simulation is testable without React or PixiJS; React re-renders only on meaningful state changes.
 - Harder: scene objects are created and destroyed by hand, so ownership must be explicit (ADR-0002, ADR-0006).
+- As built: there is no event bus between React and PixiJS. React holds an imperative handle to the session (pause, resume, press, release, destroy), reads a small store and receives two callbacks, loading progress and the end of the match (`src/game/runtime/session.ts`, `src/ui/MatchScreen.tsx`).
 - Revisit: if a future screen needs declarative PixiJS composition (an editor, for example), evaluate `@pixi/react` for that screen only.
 
 ## Sources

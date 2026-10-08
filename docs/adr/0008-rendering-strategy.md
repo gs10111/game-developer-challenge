@@ -31,6 +31,7 @@ The arena shows water, islands, ships with damage states, projectiles, health ba
 
 - Easier: draw calls stay low and predictable, which the profiling report shows (ADR-0009).
 - Harder: the particle API is marked experimental, so it is wrapped behind a small `EffectsLayer` interface.
+- As built: textures are individual PNG files loaded once through `Assets.load`, not atlases or bundles, and the layers are water, islands, projectiles, ships and effects. Ships switch sprite by health band, as decided. A health bar is a `Graphics` per ship redrawn only when the health changes, not two sprites. Effects are pooled sprites: a muzzle flash, a hit spark and a three-frame explosion. Not built: atlases, `ParticleContainer`, smoke, `BitmapText` and the HUD sprites of the asset pack.
 - Revisit: if the arena becomes larger than the viewport, enable culling and re-measure.
 
 ## Sources

@@ -35,6 +35,7 @@ Traced: timeout after the server saved.
 
 - Easier: the outbox is a plain list, so the UI can show "pending" per match and tests can assert on it.
 - Harder: the outbox schema is versioned and validated on read (ADR-0014).
+- As built: the outbox is a persisted list of pending records plus an in-memory list of those whose retries ran out (`src/api/outbox.ts`). One mutation with two retries sends each pending record. Records are sent again when the app starts and when the player asks, not on a reconnect event, and the mutation has no `scope`, so two pending records can be in flight together; the idempotent `PUT` is what prevents duplicates.
 - Revisit: if records grow large, store input logs separately from the outbox entry.
 
 ## Sources
