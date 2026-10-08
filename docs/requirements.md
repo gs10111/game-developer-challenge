@@ -203,10 +203,10 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Evidence | Status |
 | --- | --- | --- | --- | --- |
-| PF-01 | Combat measured in an optimised build, 60 FPS target on a documented reference machine | `vite build` + `preview` | report | Pending |
-| PF-02 | FPS, p95 frame time and entity count over a three-minute match | `game/debug/metrics`, `e2e/perf` | report + JSON | Pending |
-| PF-03 | Memory after five start, play and exit cycles, investigating continuous growth | `e2e/perf` | heap chart | Pending |
-| PF-04 | Hardware, browser, resolution, match config and observed limitations | `docs/PERFORMANCE.md` | Doc | Pending |
+| PF-01 | Combat measured in an optimised build, 60 FPS target on a documented reference machine | `vite build` + `preview` | report | In progress |
+| PF-02 | FPS, p95 frame time and entity count over a three-minute match | `game/debug/metrics`, `e2e/perf` | report + JSON | In progress |
+| PF-03 | Memory after five start, play and exit cycles, investigating continuous growth | `e2e/perf` | heap chart | In progress |
+| PF-04 | Hardware, browser, resolution, match config and observed limitations | `docs/PERFORMANCE.md` | Doc | In progress |
 
 ## Delivery (Challenge 11)
 
@@ -218,6 +218,6 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | DL-03 | README with setup, environment variables, controls, gameplay config, scenario selection and reset, commands and how to reproduce failures | `README.md` | In progress |
 | DL-04 | Commands for dev, build, preview, lint, typecheck and Playwright | `package.json`, `compose.yaml` | Done |
 | DL-05 | ARCHITECTURE covering React/PixiJS integration, simulation loop, collisions, resources, local persistence, ranking and history (contracts, cache, pending records), limitations and balancing | `ARCHITECTURE.md` | Done |
-| DL-06 | Test and profiling reports included | `reports/`, CI artifacts | Pending |
+| DL-06 | Test and profiling reports included | `reports/`, CI artifacts | In progress |
 | DL-07 | Runs from a clean checkout without private services | `compose.yaml`, `.github/workflows/ci.yml` | Done |
 | DL-08 | Every mandatory technology genuinely used (React, TS strict, PixiJS, TanStack Query, Axios, MSW, Playwright) | final review | Done |

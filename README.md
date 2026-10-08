@@ -121,6 +121,10 @@ Latencies are fixed numbers, never random, so tests are reproducible.
 - Unit tests (Vitest) cover the simulation: movement, weapons, collisions, damage, both enemy types, the spawner, the match rules and replays from a seed.
 - E2E tests (Playwright, desktop and mobile Chromium) drive the real controls against the production build. With `?e2e=1` the page exposes `window.pirateBattle`, which reads the state of the match and advances the simulation by whole steps; the rules, inputs, collisions and rendering are the real ones.
 
+## Performance
+
+Opening the game with `?perf=1` runs a match with a fixed pilot and records the time between frames, the live entities and the heap. [docs/performance.md](docs/performance.md) describes the method and holds the report.
+
 ## Assets
 
 The sprites in `public/assets` are copied from the `assets/` folder supplied with the challenge (ships, cannon ball, explosion, fire, sand and water tiles, the title and the menu background).
@@ -128,7 +132,8 @@ The sprites in `public/assets` are copied from the `assets/` folder supplied wit
 ## Known limitations
 
 - Enemies head straight for the player and slide along a shore in their way; they do not plan a route around islands.
-- There is no sound, no visual regression baseline and no performance report yet.
+- There is no sound and no visual regression baseline yet.
+- The performance report has its tool and its method, but its numbers are still to be measured in a visible tab.
 - The E2E tests cover the main flows, not every case listed in the challenge.
 ## Deploy
 

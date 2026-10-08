@@ -4,6 +4,8 @@ import { useStore } from 'zustand';
 import { END_REASON_LABELS } from '../api/contracts';
 import type { MatchRecord } from '../api/contracts';
 import type { GameConfig } from '../game/config/gameConfig';
+import { perfReports } from '../game/runtime/perf';
+import type { PerfReport } from '../game/runtime/perf';
 import { createGameSession } from '../game/runtime/session';
 import type { GameSession } from '../game/runtime/session';
 import { Command } from '../game/sim/commands';
@@ -135,11 +137,12 @@ function Hud({ session }: { session: GameSession }) {
 interface ActiveMatchProps {
   session: GameSession;
   result: MatchRecord | null;
+  benchmark: readonly PerfReport[] | null;
   onPlayAgain: () => void;
   onExit: () => void;
 }
 
-function ActiveMatch({ session, result, onPlayAgain, onExit }: ActiveMatchProps) {
+function ActiveMatch({ session, result, benchmark, onPlayAgain, onExit }: ActiveMatchProps) {
   const phase = useStore(session.hud, (state) => state.phase);
   const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
 
@@ -195,9 +198,24 @@ function ActiveMatch({ session, result, onPlayAgain, onExit }: ActiveMatchProps)
             <dd data-testid="result-reason">{END_REASON_LABELS[result.endReason]}</dd>
             <dt>Record</dt>
             <dd>
-              <RecordStatusLine matchId={result.matchId} />
+              {benchmark === null ? (
+                <RecordStatusLine matchId={result.matchId} />
+              ) : (
+                'Benchmark run, not recorded.'
+              )}
             </dd>
           </dl>
+          {benchmark !== null && (
+            <label className="benchmark">
+              Performance report
+              <textarea
+                readOnly
+                rows={8}
+                data-testid="performance-report"
+                value={JSON.stringify(benchmark, null, 2)}
+              />
+            </label>
+          )}
           <div className="actions">
             <button type="button" className="primary" autoFocus onClick={onPlayAgain}>
               Play Again
@@ -219,6 +237,7 @@ export function MatchScreen({ ticket, onFinished, onPlayAgain, onExit }: MatchSc
   const [load, setLoad] = useState<LoadState>({ status: 'loading', progress: 0 });
   const [session, setSession] = useState<GameSession | null>(null);
   const [result, setResult] = useState<MatchRecord | null>(null);
+  const [benchmark, setBenchmark] = useState<readonly PerfReport[] | null>(null);
 
   useEffect(() => {
     finishedRef.current = onFinished;
@@ -258,6 +277,9 @@ export function MatchScreen({ ticket, onFinished, onPlayAgain, onExit }: MatchSc
           },
         };
         setResult(record);
+        if (summary.performance !== null) {
+          setBenchmark([...perfReports()]);
+        }
         finishedRef.current(record);
       },
     })
@@ -285,7 +307,13 @@ export function MatchScreen({ ticket, onFinished, onPlayAgain, onExit }: MatchSc
     <main className="match">
       <h1 className="visually-hidden">Pirate Battle match</h1>
       {session !== null && (
-        <ActiveMatch session={session} result={result} onPlayAgain={onPlayAgain} onExit={onExit} />
+        <ActiveMatch
+          session={session}
+          result={result}
+          benchmark={benchmark}
+          onPlayAgain={onPlayAgain}
+          onExit={onExit}
+        />
       )}
       <div className="arena" ref={hostRef} data-testid="arena" />
       {load.status === 'loading' && (

@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { MatchRecord } from '../api/contracts';
 import { enqueueMatch, loadLastResult, saveLastResult, useOutboxSync } from '../api/outbox';
+import type { GameConfig } from '../game/config/gameConfig';
+import { BENCHMARK_PLAYER_HEALTH, perfRequested } from '../game/runtime/perf';
 import { configFromOptions, loadOptions, loadPlayerId } from '../storage/options';
 import type { Options } from '../storage/options';
 import { MainMenu } from './MainMenu';
@@ -30,6 +32,13 @@ function chooseSeed(): number {
   return Number.isInteger(requested) && requested > 0 ? requested : Date.now() % SEED_RANGE;
 }
 
+function matchConfig(options: Options): GameConfig {
+  const config = configFromOptions(options);
+  return perfRequested()
+    ? { ...config, player: { ...config.player, health: BENCHMARK_PLAYER_HEALTH } }
+    : config;
+}
+
 function Shell() {
   useOutboxSync();
   const [options, setOptions] = useState<Options>(loadOptions);
@@ -41,13 +50,16 @@ function Shell() {
     setTicket({
       matchId: crypto.randomUUID(),
       seed: chooseSeed(),
-      config: configFromOptions(options),
+      config: matchConfig(options),
       playerId,
       playerName: options.playerName,
     });
   };
 
   const finish = (record: MatchRecord): void => {
+    if (perfRequested()) {
+      return;
+    }
     saveLastResult(record);
     setLastResult(record);
     enqueueMatch(record);
