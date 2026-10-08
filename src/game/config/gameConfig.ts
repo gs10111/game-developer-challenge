@@ -31,6 +31,15 @@ export interface GameConfig {
     readonly health: number;
     readonly weapons: Weapons;
   };
+  readonly enemies: {
+    readonly chaser: {
+      readonly radius: number;
+      readonly speed: number;
+      readonly turnRateDegrees: number;
+      readonly health: number;
+      readonly contactDamage: number;
+    };
+  };
 }
 
 export const DEFAULT_GAME_CONFIG: GameConfig = {
@@ -91,6 +100,15 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
         damage: 15,
         spacing: 14,
       },
+    },
+  },
+  enemies: {
+    chaser: {
+      radius: 18,
+      speed: 110,
+      turnRateDegrees: 160,
+      health: 30,
+      contactDamage: 25,
     },
   },
 };

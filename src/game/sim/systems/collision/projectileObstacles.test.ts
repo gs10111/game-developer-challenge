@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { ConvexPolygon, GameConfig, Point } from '../../../config/gameConfig';
+import type { ConvexPolygon, Point } from '../../../config/gameConfig';
 import { createMatch } from '../../createMatch';
 import { PROJECTILE_POOL_CAPACITY } from '../../limits';
 import { acquire } from '../../pool';
 import { step } from '../../step';
-import { testPlayer } from '../../testing/testPlayer';
+import { testConfig } from '../../testing/testConfig';
 import { createProjectile } from '../../world';
 import type { Projectile, World } from '../../world';
 
@@ -23,10 +23,7 @@ function rectangle(left: number, top: number, right: number, bottom: number): Po
 }
 
 function buildConfig(width: number, height: number, islands: ConvexPolygon[] = []) {
-  return {
-    arena: { width, height, islands },
-    player: testPlayer(),
-  } satisfies GameConfig;
+  return testConfig({ width, height, islands });
 }
 
 function hold(world: World, commands: number, steps: number): void {

@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { ConvexPolygon, GameConfig } from '../../config/gameConfig';
+import type { ConvexPolygon } from '../../config/gameConfig';
 import { createMatch } from '../createMatch';
 import { acquire } from '../pool';
 import { step } from '../step';
 import { STEPS_PER_SECOND } from '../stepRate';
-import { testPlayer } from '../testing/testPlayer';
+import { testConfig } from '../testing/testConfig';
 import { createProjectile } from '../world';
 import type { Projectile, World } from '../world';
 
@@ -24,10 +24,7 @@ const COURSES = [
 ];
 
 function buildConfig(islands: ConvexPolygon[] = []) {
-  return {
-    arena: { width: 2000, height: 2000, islands },
-    player: testPlayer(),
-  } satisfies GameConfig;
+  return testConfig({ width: 2000, height: 2000, islands });
 }
 
 function fire(world: World, shot: Partial<Projectile>): Projectile {

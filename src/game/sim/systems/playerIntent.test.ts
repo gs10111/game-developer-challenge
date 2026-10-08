@@ -1,11 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import type { GameConfig } from '../../config/gameConfig';
 import { Command } from '../commands';
 import { createMatch } from '../createMatch';
 import { acquire } from '../pool';
 import { step } from '../step';
 import { STEPS_PER_SECOND } from '../stepRate';
-import { testPlayer } from '../testing/testPlayer';
+import { testConfig } from '../testing/testConfig';
 import type { Ship, World } from '../world';
 
 const SEED = 20261007;
@@ -48,10 +47,7 @@ const SHOTS = [
 ];
 
 function buildConfig() {
-  return {
-    arena: { width: 960, height: 540, islands: [] },
-    player: testPlayer(),
-  } satisfies GameConfig;
+  return testConfig({ width: 960, height: 540, islands: [] });
 }
 
 function launch(world: World, course: Partial<Ship>): Ship {

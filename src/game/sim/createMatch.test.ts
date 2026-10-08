@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest';
-import type { GameConfig } from '../config/gameConfig';
 import { createIslandIndex } from './collision/islandIndex';
 import { Layer } from './collision/layers';
 import { createMatch } from './createMatch';
@@ -8,37 +7,31 @@ import { EVENT_QUEUE_CAPACITY, PROJECTILE_POOL_CAPACITY, SHIP_POOL_CAPACITY } fr
 import { acquire } from './pool';
 import { createRandomSource, nextRandom } from './random';
 import type { RandomSource } from './random';
-import { testPlayer } from './testing/testPlayer';
-import { createProjectile, createShip } from './world';
+import { testConfig } from './testing/testConfig';
+import { createProjectile, createShip, ShipKind } from './world';
 
 function buildConfig() {
-  return {
-    arena: { width: 960, height: 540, islands: [] },
-    player: testPlayer(),
-  } satisfies GameConfig;
+  return testConfig({ width: 960, height: 540, islands: [] });
 }
 
 function buildArchipelago() {
-  return {
-    arena: {
-      width: 960,
-      height: 540,
-      islands: [
-        [
-          { x: 100, y: 100 },
-          { x: 300, y: 100 },
-          { x: 300, y: 200 },
-          { x: 100, y: 200 },
-        ],
-        [
-          { x: 600, y: 300 },
-          { x: 760, y: 380 },
-          { x: 640, y: 460 },
-        ],
+  return testConfig({
+    width: 960,
+    height: 540,
+    islands: [
+      [
+        { x: 100, y: 100 },
+        { x: 300, y: 100 },
+        { x: 300, y: 200 },
+        { x: 100, y: 200 },
       ],
-    },
-    player: testPlayer(),
-  } satisfies GameConfig;
+      [
+        { x: 600, y: 300 },
+        { x: 760, y: 380 },
+        { x: 640, y: 460 },
+      ],
+    ],
+  });
 }
 
 function draw(source: RandomSource, count: number): number[] {
@@ -206,7 +199,7 @@ describe('match creation (ADR-0006)', () => {
         expect(snapshotParts).toContain(vertex);
       }
     }
-    expect(snapshotParts).toHaveLength(16);
+    expect(snapshotParts).toHaveLength(18);
     expect(snapshotParts.filter((part) => sourceParts.has(part))).toEqual([]);
     expect(snapshotParts.filter((part) => !Object.isFrozen(part))).toEqual([]);
 
@@ -373,6 +366,25 @@ describe('match creation (ADR-0006)', () => {
       maxHealth: 35,
       pendingDamage: 0,
     });
+  });
+
+  test('MT-05 the player of a fresh match is of the player kind and has not exploded', () => {
+    const config = buildConfig();
+    const previous = createMatch(config, 7);
+    const fresh = { kind: 'player', contactDamage: 0, exploded: false };
+
+    expect(previous.player).toMatchObject(fresh);
+
+    const wrecked = { kind: ShipKind.Chaser, contactDamage: 25, exploded: true } as const;
+    Object.assign(previous.player, wrecked);
+
+    const next = createMatch(config, 7);
+
+    expect(next.player).toMatchObject(fresh);
+    for (const ship of next.ships.slots.slice(1)) {
+      expect(ship).toMatchObject({ kind: null, contactDamage: 0, exploded: false });
+    }
+    expect(previous.player).toMatchObject(wrecked);
   });
 
   test('MT-05 a fresh match has no active projectile and no event', () => {

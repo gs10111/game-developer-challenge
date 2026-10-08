@@ -13,7 +13,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | PL-01 | Move forward and rotate both ways, with speeds from the config | `sim/systems/movement` | T3, U | In progress |
 | PL-02 | Front cannon fires one projectile | `sim/systems/weapons` | T4, U | In progress |
 | PL-03 | Broadside fires three parallel projectiles, with separate left and right commands | `sim/systems/weapons` | T4, U | In progress |
-| PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/damage` | T4, T5, U | In progress |
+| PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/collision/chaserImpacts`, `sim/systems/damage` | T4, T5, U | In progress |
 | PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3, U | In progress |
 | PL-06 | Cannot cross islands | `sim/systems/collision` | T3, U | In progress |
 | PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | Pending |
@@ -25,11 +25,11 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
-| EN-01 | Chaser pursues the player | `sim/ai/chaser` | T5 | Pending |
-| EN-02 | Chaser damages the player on contact and explodes on impact | `sim/systems/damage` | T5 | Pending |
-| EN-03 | A Chaser destroying itself on the player scores no point | `sim/systems/damage` | T4, T5 | Pending |
+| EN-01 | Chaser pursues the player | `sim/ai/pursuit`, `sim/systems/enemyIntent` | T5, U | In progress |
+| EN-02 | Chaser damages the player on contact and explodes on impact | `sim/systems/collision/chaserImpacts`, `sim/systems/damage` | T5, U | In progress |
+| EN-03 | A Chaser destroying itself on the player scores no point | `sim/systems/damage` | T4, T5, U | In progress |
 | EN-04 | Shooter approaches and fires only within the configured attack range | `sim/ai/shooter` | T5 | Pending |
-| EN-05 | Enemies move and rotate with limited turn speed | `sim/systems/movement` | T5 | Pending |
+| EN-05 | Enemies move and rotate with limited turn speed | `sim/systems/enemyIntent`, `sim/systems/movement` | T5, U | In progress |
 | EN-06 | Enemies take damage and have their own health | `sim/systems/damage` | T4, U | In progress |
 | EN-07 | Enemies respect island collision and steer around islands | `sim/ai/steering`, `sim/systems/collision` | T5 | Pending |
 | EN-08 | Both enemy types appear in a default match (mix in the config) | `sim/systems/spawner`, `config` | T5 | Pending |
@@ -74,7 +74,7 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | FX-01 | Visual effect when firing | `render/fx`, `sim/events` (the shot event) | visual, U | In progress |
 | FX-02 | Explosion on destruction | `render/fx`, `sim/events` (the destroyed event) | T5, U | In progress |
 | FX-03 | Ships show damage states by health band | `render/ships` | T4, visual | Pending |
-| FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/fx`, `sim/events` (the hit event) | T4, U | In progress |
+| FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/fx`, `sim/events` (the hit event, for shots and for a Chaser's impact) | T4, U | In progress |
 | FX-05 | Effects are short and do not hide ships or projectiles | `render` | manual | Pending |
 | FX-06 | Extra: firing, explosion and ambient sounds with a mute control | `audio` | manual | Pending |
 

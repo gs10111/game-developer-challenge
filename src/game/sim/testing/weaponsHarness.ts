@@ -1,18 +1,15 @@
-import type { ConvexPolygon, GameConfig } from '../../config/gameConfig';
+import type { ConvexPolygon } from '../../config/gameConfig';
 import { Command } from '../commands';
 import type { GameEvent } from '../events';
 import { step } from '../step';
 import type { Projectile, Ship, World } from '../world';
-import { testPlayer } from './testPlayer';
+import { testConfig } from './testConfig';
 
 export const SEED = 20261007;
 export const EVERY_WEAPON = Command.FireFront | Command.FireLeft | Command.FireRight;
 
 export function buildConfig(islands: ConvexPolygon[] = []) {
-  return {
-    arena: { width: 2000, height: 2000, islands },
-    player: testPlayer(),
-  } satisfies GameConfig;
+  return testConfig({ width: 2000, height: 2000, islands });
 }
 
 export function hold(world: World, commands: number, steps: number): void {

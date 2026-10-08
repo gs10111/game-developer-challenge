@@ -5,9 +5,17 @@ import type { EventQueue } from './events';
 import type { Pool } from './pool';
 import type { RandomSource } from './random';
 
+export const ShipKind = {
+  Player: 'player',
+  Chaser: 'chaser',
+} as const;
+
+export type ShipKind = (typeof ShipKind)[keyof typeof ShipKind];
+
 export interface Ship {
   active: boolean;
   layer: Layer | null;
+  kind: ShipKind | null;
   x: number;
   y: number;
   previousX: number;
@@ -19,6 +27,8 @@ export interface Ship {
   health: number;
   maxHealth: number;
   pendingDamage: number;
+  contactDamage: number;
+  exploded: boolean;
   thrust: 0 | 1;
   turn: -1 | 0 | 1;
   fireFront: 0 | 1;
@@ -63,6 +73,7 @@ export interface World {
 const FRESH_SHIP: Readonly<Ship> = Object.freeze({
   active: false,
   layer: null,
+  kind: null,
   x: 0,
   y: 0,
   previousX: 0,
@@ -74,6 +85,8 @@ const FRESH_SHIP: Readonly<Ship> = Object.freeze({
   health: 0,
   maxHealth: 0,
   pendingDamage: 0,
+  contactDamage: 0,
+  exploded: false,
   thrust: 0,
   turn: 0,
   fireFront: 0,

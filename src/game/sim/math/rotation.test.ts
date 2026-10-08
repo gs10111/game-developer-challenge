@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import { HEADING_UNITS_PER_TURN, cosine, normaliseHeading, sine } from './rotation';
+import {
+  HEADING_UNITS_PER_TURN,
+  cosine,
+  headingUnitsFromDegrees,
+  normaliseHeading,
+  sine,
+} from './rotation';
 import { SINE_TABLE } from './sineTable';
 
 const RADIANS_PER_ENTRY = (2 * Math.PI) / 512;
@@ -86,6 +92,26 @@ describe('quantized rotation (ADR-0005)', () => {
 
       expect(normalised).toBeGreaterThanOrEqual(0);
       expect(normalised).toBeLessThan(512);
+    }
+  });
+
+  test('PW-03 a turn rate in degrees converts to heading units, 512 to the turn', () => {
+    const conversions: readonly (readonly [degrees: number, units: number])[] = [
+      [0, 0],
+      [0.703125, 1],
+      [22.5, 32],
+      [45, 64],
+      [90, 128],
+      [150, 640 / 3],
+      [160, 2048 / 9],
+      [168.75, 240],
+      [180, 256],
+      [360, 512],
+      [720, 1024],
+    ];
+
+    for (const [degrees, units] of conversions) {
+      expect(headingUnitsFromDegrees(degrees)).toBe(units);
     }
   });
 });

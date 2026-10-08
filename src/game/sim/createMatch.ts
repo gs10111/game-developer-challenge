@@ -3,18 +3,12 @@ import { createIslandIndex } from './collision/islandIndex';
 import { Layer } from './collision/layers';
 import { createEventQueue } from './events';
 import { EVENT_QUEUE_CAPACITY, PROJECTILE_POOL_CAPACITY, SHIP_POOL_CAPACITY } from './limits';
-import { HEADING_UNITS_PER_TURN } from './math/rotation';
+import { headingUnitsFromDegrees } from './math/rotation';
 import { acquire, createPool } from './pool';
 import type { Pool } from './pool';
 import { createRandomSource } from './random';
-import { createProjectile, createShip, resetProjectile, resetShip } from './world';
+import { createProjectile, createShip, resetProjectile, resetShip, ShipKind } from './world';
 import type { Ship, World } from './world';
-
-const DEGREES_PER_TURN = 360;
-
-function headingUnitsFromDegrees(degrees: number): number {
-  return (degrees * HEADING_UNITS_PER_TURN) / DEGREES_PER_TURN;
-}
 
 function frozenCopy<Value>(value: Value): Value {
   if (typeof value !== 'object' || value === null) {
@@ -37,6 +31,7 @@ function acquirePlayer(ships: Pool<Ship>, config: GameConfig): Ship {
     throw new Error('The ship pool has no free slot for the player');
   }
   player.layer = Layer.Player;
+  player.kind = ShipKind.Player;
   player.x = config.arena.width / 2;
   player.y = config.arena.height / 2;
   player.previousX = player.x;

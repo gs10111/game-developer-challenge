@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { GameConfig } from '../config/gameConfig';
 import { Command } from '../sim/commands';
 import { createMatch } from '../sim/createMatch';
 import { step } from '../sim/step';
 import { STEPS_PER_SECOND } from '../sim/stepRate';
-import { testPlayer } from '../sim/testing/testPlayer';
+import { testConfig } from '../sim/testing/testConfig';
 import { advance, createFixedStepClock, interpolation, reset } from './fixedStepClock';
 import type { FixedStepClock } from './fixedStepClock';
 
@@ -20,10 +19,9 @@ const ROUNDING_OF_THE_COURSE = (STEPS_IN_TEN_SECONDS + 1) * ULP_BELOW_1024;
 const FRACTION_DIGITS = 9;
 
 function buildConfig() {
-  return {
-    arena: { width: 960, height: 540, islands: [] },
-    player: { ...testPlayer(), speed: SPEED },
-  } satisfies GameConfig;
+  const config = testConfig({ width: 960, height: 540, islands: [] });
+  config.player.speed = SPEED;
+  return config;
 }
 
 function frameTime(frame: number, framesPerSecond: number): number {

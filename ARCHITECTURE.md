@@ -6,8 +6,8 @@ This document describes the system as it is built, and grows with each slice. Th
 
 | Layer | Path | Role | Built so far |
 | --- | --- | --- | --- |
-| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement, health and weapons |
-| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds, layers, hits, damage and score |
+| Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement, health and weapons, the Chaser |
+| Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds, layers, hits, damage and score, ship kinds, the Chaser's pursuit and impact |
 | Loop | `src/game/loop` | Timing that drives the simulation | Fixed-step clock |
 | Render | `src/game/render` | PixiJS scene | Not yet |
 | Input | `src/game/input` | Keyboard and touch, sampled once per step | Not yet |
@@ -34,7 +34,7 @@ The continuous state of a match lives in one mutable `World` ([ADR-0006](docs/ad
 
 `createMatch(config, seed)` copies and freezes the config, so later changes to the options reach only the next match. It builds the island index and the pool, and places the player at the centre of the arena.
 
-`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask, empties the event queue and runs the systems in a fixed order: player intent, movement, weapons, projectiles, the collision stage (island collision, arena bounds, blocked ships, projectile hits, projectile obstacles) and the damage stage. Each system is a function of the world and the step length. Systems act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies will reuse them unchanged.
+`step(world, commands)` advances the match by one sixtieth of a second. It stores the command mask, empties the event queue and runs the systems in a fixed order: player intent, enemy intent, movement, weapons, projectiles, the collision stage (island collision, arena bounds, blocked ships, projectile hits, Chaser impacts, projectile obstacles) and the damage stage. Each system is a function of the world and the step length. Movement, weapons and collision act on every active ship and read speed, turn rate and radius from the ship itself, where they were stamped from the config, so enemies reuse them unchanged.
 
 Pools have a fixed capacity, reset a slot in place when it is acquired or released, and are scanned by slot index. The step allocates nothing.
 
@@ -63,7 +63,7 @@ The front cannon fires one projectile from the bow along the heading. A broadsid
 
 ### Events
 
-The simulation reports what happened in a step through a queue of pre-allocated events, emptied when the next step starts. It carries three kinds: a shot, with the layer of the ship that fired, the weapon, the muzzle position and the direction; a hit, with the layer of the ship that was hit, the point of impact and the direction of the projectile; and a destruction, with the ship's layer and position. The simulation never reads the queue back. The loop driver will have to hand it to the renderer and the sound after every step, not once per frame: at 30 frames per second a frame runs two steps, and at 144 some frames run none.
+The simulation reports what happened in a step through a queue of pre-allocated events, emptied when the next step starts. It carries three kinds: a shot, with the layer of the ship that fired, the weapon, the muzzle position and the direction; a hit, with the layer of the ship that was hit, the point of impact and the direction of the projectile or of the Chaser that rammed it; and a destruction, with the ship's layer and position. The simulation never reads the queue back. The loop driver will have to hand it to the renderer and the sound after every step, not once per frame: at 30 frames per second a frame runs two steps, and at 144 some frames run none.
 
 ### Hits, damage and score
 
@@ -78,6 +78,21 @@ Three choices are worth stating:
 - An enemy is inactive from the end of the step that destroys it. Shots it had already fired keep flying and can still hit the player. The challenge says destroyed enemies stop causing damage, firing and colliding; this is read as being about the enemy itself, and its list of reasons for a projectile to disappear does not include the death of whoever fired it.
 - Several shots that reach one ship in the same step are all spent, even when the first would have destroyed it, as with the three shots of a broadside.
 - A ship on a projectile's path wins over an island or a wall at the end of that path in the same step.
+
+### Enemies
+
+A ship carries a kind: the player, a Chaser, or none for a ship that tests place by hand. Enemy parameters live in the config under `enemies`; the Chaser has a radius, a speed, a turn rate, a health and a contact damage. `spawnChaser(world, x, y, heading)` takes a free ship from the pool and stamps it from the config the match was created with, and returns nothing when the pool is full. The spawner, still to come, will call it.
+
+The enemy intent system runs right after the player's ([ADR-0016](docs/adr/0016-no-rust-webassembly.md)). For each Chaser it sets the thrust and picks a turn toward the player: none when the Chaser already faces the player within the angle it turns in one step, which keeps it from swinging from side to side; otherwise right or left, by the sign of the cross product between its heading and the direction to the player. No inverse trigonometry is involved. Movement then applies the Chaser's own speed and turn rate, which is what limits how fast it turns.
+
+The Chaser impacts system runs in the collision stage, after the step's shots have been judged. A Chaser whose circle overlaps the player's explodes: its contact damage is banked on the player like a shot's, a hit is reported on the player at the point of contact, and the damage stage reports the Chaser's destruction and removes it without a point. A Chaser that only touches the player has not reached it.
+
+Four things are worth stating:
+
+- A Chaser that the player's shots bring to zero in the very step it would reach the player does not explode: the player takes no damage and gets the point. One that is hit in that step but survives the shots still explodes, with no point.
+- Several Chasers that reach the player in one step each apply their damage.
+- A Chaser always moves forward, so while it turns it travels on a circle whose radius is its speed divided by its turn rate. If that circle were wider than the contact distance, the sum of the two radii, the Chaser could circle a still player for ever. The defaults keep it narrower, 39.4 against 42, and a test pins the relation.
+- The Chaser heads straight for the player. An island in the way holds it or makes it slide along the shore until the player moves; steering around islands comes next.
 
 ### Islands and collision
 
@@ -111,7 +126,7 @@ There is no backend. The MSW service worker starts before the first render in ev
 ## Current limitations
 
 - The arena size, the island layout, the player's start position and the movement values are provisional until the arena is drawn and the game is balanced.
-- Island polygons, speeds and weapon values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, or a non-positive cooldown would not be caught.
-- Enemies exist only as ships that tests place by hand: enemy types, their steering and their spawning come next, and nothing ends the match yet.
+- Island polygons, speeds, weapon values and enemy values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, a non-positive cooldown, or a Chaser that turns wider than its contact distance would not be caught.
+- The Chaser is the only enemy type, and only tests spawn it: steering around islands, the Shooter and the spawner come next. Nothing ends the match yet, so a Chaser keeps pursuing a player whose health is at zero.
 - A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
 - Nothing is rendered yet: the rules above are exercised by unit tests only.

@@ -9,15 +9,20 @@ function applyPendingDamage(world: World): void {
   const capacity = slots.length;
   for (let index = 0; index < capacity; index += 1) {
     const ship = slots[index];
-    if (ship?.active && ship.pendingDamage > 0) {
-      const healthBefore = ship.health;
-      ship.health = Math.max(0, healthBefore - ship.pendingDamage);
-      ship.pendingDamage = 0;
-      if (healthBefore > 0 && ship.health === 0) {
+    if (ship?.active) {
+      if (ship.exploded) {
         pushEvent(world.events, EventKind.Destroyed, ship.layer, null, ship.x, ship.y, 0, 0);
-        if (ship.layer === Layer.Enemy) {
-          world.score += 1;
-          release(pool, ship);
+        release(pool, ship);
+      } else if (ship.pendingDamage > 0) {
+        const healthBefore = ship.health;
+        ship.health = Math.max(0, healthBefore - ship.pendingDamage);
+        ship.pendingDamage = 0;
+        if (healthBefore > 0 && ship.health === 0) {
+          pushEvent(world.events, EventKind.Destroyed, ship.layer, null, ship.x, ship.y, 0, 0);
+          if (ship.layer === Layer.Enemy) {
+            world.score += 1;
+            release(pool, ship);
+          }
         }
       }
     }

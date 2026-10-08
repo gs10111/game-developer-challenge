@@ -3,7 +3,7 @@ import { Layer } from './collision/layers';
 import { acquire, createPool, release } from './pool';
 import type { Pool, PoolSlot } from './pool';
 import { testWeapons } from './testing/testWeapons';
-import { createProjectile, createShip, resetProjectile, resetShip } from './world';
+import { createProjectile, createShip, resetProjectile, resetShip, ShipKind } from './world';
 
 interface Crate extends PoolSlot {
   cargo: number;
@@ -27,6 +27,8 @@ function overwriteEveryField(slot: PoolSlot, fresh: PoolSlot): void {
       Reflect.set(slot, field, testWeapons());
     } else if (field === 'layer') {
       Reflect.set(slot, field, Layer.Enemy);
+    } else if (field === 'kind') {
+      Reflect.set(slot, field, ShipKind.Chaser);
     } else {
       throw new Error(`No way to overwrite the field ${field}`);
     }

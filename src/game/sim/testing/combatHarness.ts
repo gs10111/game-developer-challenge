@@ -1,10 +1,10 @@
-import type { ConvexPolygon, GameConfig, Point } from '../../config/gameConfig';
+import type { ConvexPolygon, Point } from '../../config/gameConfig';
 import { Layer } from '../collision/layers';
 import type { GameEvent, WeaponName } from '../events';
 import { acquire } from '../pool';
 import { step } from '../step';
 import type { Projectile, Ship, World } from '../world';
-import { testPlayer } from './testPlayer';
+import { testConfig } from './testConfig';
 
 export const SEED = 20261007;
 
@@ -25,10 +25,7 @@ export function rectangle(left: number, top: number, right: number, bottom: numb
 }
 
 export function buildConfig(islands: ConvexPolygon[] = []) {
-  return {
-    arena: { width: 2000, height: 2000, islands },
-    player: testPlayer(),
-  } satisfies GameConfig;
+  return testConfig({ width: 2000, height: 2000, islands });
 }
 
 export function placeShip(world: World, fields: Partial<Ship>): Ship {

@@ -110,3 +110,30 @@ VERIFICATION: lint, typecheck and unit tests. No E2E in this slice.
 AFTER THE SLICE (maestro): EN-01, EN-02, EN-03 and EN-05 move to "In progress" in docs/requirements.md with "U" in their Test column, and their Where cells name `sim/ai/pursuit`, `sim/systems/enemyIntent` and `sim/systems/collision/chaserImpacts`; ARCHITECTURE.md gains the enemy config, the Chaser's pursuit, its impact and the constraint on its turning radius; as-built lines go to ADR-0006 (the AI stage, the exploded path of the damage stage, the turning-radius constraint) and ADR-0007 (the Chaser's contact: overlap of the two circles at the end of the step, after the step's shots).
 CARRIED TO LATER SLICES: steering around islands with short rays (EN-07), after which the replay's numbers are derived again; the Shooter and its attack range (EN-04); the spawner, which calls `spawnChaser` at points clear of the islands and away from the player (EN-08 to EN-11); the config schema, which must keep a Chaser's turning radius below its contact distance; the match slice, which stops enemies from pursuing a destroyed player.
 ```
+
+## Outcome
+
+- Tests first: 26 new tests across the five subtasks and one more after the review, 189 in all. Session limits cut two implementer runs; each was resumed from the tree, and the red of every test of subtasks 3 to 5 was confirmed by temporary source edits.
+- Test audit, full mode: approved; 188 of 188 tests in two consecutive runs, before the follow-ups below. Every test named in the plan exists with its name and pins its rule, and subtask 1 changed no existing assertion beyond one exact count that the new config sections moved from 16 to 18.
+- Review, rigorous mode: approved with notes. No finding on spec, correctness, ADRs, determinism or loop cost. Both readings of the step in which shots and contact coincide were judged defensible.
+
+Changed after the review, by one more implementer run:
+
+- The locals of `turnToward` took the names the simulation already uses (`aheadX`, `offsetX`, `bandSine`), and the damage stage tests `active` once.
+- A Chaser that reaches the player now pushes a `hit` event with the player's layer, at the point of contact and along the Chaser's heading, before its `destroyed` event (FX-04, partial). The review had found that an impact lowered the player's health with no event for the renderer and the sound to react to. One test was added and the queues asserted by the impact tests gained the event.
+
+Departures from the plan:
+
+- The replay sets the Chaser's health to twice the broadside's damage, 24, in its own config. With the fixture's 30, no Chaser present from the first step could be shot down without taking the volley that sinks the raider; a search over 62,560 placements found none. No rule depends on the value.
+- The replay's second Chaser slides along an island on its way, as the plan allows; its numbers will move when enemies steer around islands.
+
+Order of the next slices, decided after this one: the Shooter (EN-04), the spawner (EN-08 to EN-11) and the match rules come before steering around islands (EN-07). The challenge asks enemies to respect collisions with islands, which they do; steering around them is an improvement on top of that.
+
+Carried to later slices, in addition to the list above:
+
+- The config schema must also require a Chaser's health to be above zero (at zero it neither explodes nor can be destroyed) and its turn to stay below a quarter of a turn per step (beyond that the facing band covers the whole front half-plane).
+- `spawnChaser` stores the heading as given; the spawner should pass one in `[0, 512)`.
+- The check for a Chaser that has already exploded cannot be true through `step`, since the damage stage releases it in the same step; it stays as a guard.
+- The `Player` kind is stamped and not read by any system yet.
+- `vitest list` parses files statically and reports eleven phantom entries, one per direct call of `testConfig`; `vitest run` and `-t` are not affected.
+- Later slices leave the replay of `step.test.ts` as it is and add compact replays of their own.
