@@ -128,7 +128,9 @@ test('API-11 a saved match appears in the ranking on the page its score puts it'
   await matchReady(page);
   const ended = await advance(page, 7200);
   expect(ended.score).toBe(0);
-  await expect(page.getByTestId('record-status')).toHaveAttribute('data-status', 'saved');
+  await expect(page.getByTestId('record-status')).toHaveAttribute('data-status', 'saved', {
+    timeout: 20_000,
+  });
 
   await page.getByRole('button', { name: 'Main Menu' }).click();
   await page.getByRole('tab', { name: 'Ranking' }).click();

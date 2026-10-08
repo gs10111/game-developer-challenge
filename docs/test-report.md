@@ -1,6 +1,6 @@
 # Test report
 
-State of the tests at commit `2441034`, 8 October 2026, taken from the CI run of that commit ([run 37782821163](https://github.com/gs10111/game-developer-challenge/actions/runs/37782821163)). CI runs every check inside the container of [ADR-0017](adr/0017-containerized-environment.md).
+State of the tests on the `main` branch. CI runs every check on each push, inside the container of [ADR-0017](adr/0017-containerized-environment.md); the runs are listed at [github.com/gs10111/game-developer-challenge/actions](https://github.com/gs10111/game-developer-challenge/actions).
 
 | Check | Command | Result |
 | --- | --- | --- |
@@ -58,3 +58,5 @@ How these map to the twelve flows of the challenge, and what each flow still lac
 ## Failures seen
 
 One CI run failed, at commit `a47aec5`: the test PL-02 counted 5 projectiles where it expected 4, on desktop. The frame loop was still advancing the match beside the test, and on a slow runner the cooldown of the front cannon elapsed between two calls of the test. Since commit `d4445ce` only the test advances a match opened with `?e2e=1`. The E2E tests were never run on the development machine, where Docker did not start; CI is the only place they have run.
+
+Two more failures were seen when six tests were added, both on the mobile project and both from load: one test ran out of time, and one did not see its record saved within five seconds. The mobile project asked for the canvas at twice the size, drawn by a software renderer in CI. With the test seam on, the canvas is now drawn at a pixel ratio of 1; the waits for a saved record are longer; and in CI a failed test is retried once, so a test that passes only on the second try is reported as flaky and not hidden.

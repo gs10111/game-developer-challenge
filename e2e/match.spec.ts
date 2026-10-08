@@ -121,7 +121,9 @@ test('MT-03 a match that ends shows its result, saves one record and survives a 
   await expect(page.getByRole('dialog', { name: 'Match over' })).toBeVisible();
   await expect(page.getByTestId('result-reason')).toHaveText('Ship destroyed');
   await expect(page.getByTestId('result-score')).toHaveText(String(ended.score));
-  await expect(page.getByTestId('record-status')).toHaveAttribute('data-status', 'saved');
+  await expect(page.getByTestId('record-status')).toHaveAttribute('data-status', 'saved', {
+    timeout: 20_000,
+  });
   expect((await advance(page, 300)).step).toBe(ended.step);
 
   await page.getByRole('button', { name: 'Main Menu' }).click();

@@ -6,7 +6,7 @@ import type { GameConfig } from '../config/gameConfig';
 import { clear, createCommandState, press, release } from '../input/commandState';
 import { attachKeyboard } from '../input/keyboard';
 import { advance, createFixedStepClock, interpolation, reset } from '../loop/fixedStepClock';
-import { createRenderer } from '../render/renderer';
+import { createRenderer, MAXIMUM_RESOLUTION } from '../render/renderer';
 import { loadTextures } from '../render/textures';
 import { Layer } from '../sim/collision/layers';
 import { EventKind, WeaponName } from '../sim/events';
@@ -126,13 +126,17 @@ function soundOf(event: GameEvent): SoundName {
 
 export async function createGameSession(options: SessionOptions): Promise<GameSession> {
   const textures = await loadTextures(options.onProgress);
-  const renderer = await createRenderer(options.config, textures);
+  const steppedByTests = new URLSearchParams(window.location.search).has('e2e');
+  const renderer = await createRenderer(
+    options.config,
+    textures,
+    steppedByTests ? 1 : MAXIMUM_RESOLUTION,
+  );
   const match = startMatch(options.config, options.seed);
   const commands = createCommandState();
   const clock = createFixedStepClock(performance.now());
   const hud = createStore<HudState>(() => readHud(match, 'running'));
   const recorder = perfRequested() ? createPerfRecorder() : null;
-  const steppedByTests = new URLSearchParams(window.location.search).has('e2e');
   const sounds = createSounds(steppedByTests || recorder !== null);
   let phase: MatchPhase = 'running';
   let lastFrameMs = performance.now();

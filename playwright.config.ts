@@ -7,7 +7,8 @@ export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
   forbidOnly: runsInCi,
-  retries: 0,
+  retries: runsInCi ? 1 : 0,
+  timeout: 45_000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: previewUrl,

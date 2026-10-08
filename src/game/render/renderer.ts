@@ -20,7 +20,7 @@ const HEALTH_BAR_HEIGHT = 6;
 const HEALTH_BAR_GAP = 14;
 const FLASH_SECONDS = 0.14;
 const EFFECT_CAPACITY = 48;
-const MAXIMUM_RESOLUTION = 2;
+export const MAXIMUM_RESOLUTION = 2;
 const ENEMY_SHOT_TINT = 0xff8a65;
 const HIT_TINT = 0xff7b7b;
 const PLAIN_TINT = 0xffffff;
@@ -140,6 +140,7 @@ function createShipView(): ShipView {
 export async function createRenderer(
   config: GameConfig,
   textures: GameTextures,
+  maximumResolution: number,
 ): Promise<Renderer> {
   const { width, height } = config.arena;
   const app = new Application();
@@ -148,7 +149,7 @@ export async function createRenderer(
     height,
     antialias: true,
     autoDensity: true,
-    resolution: Math.min(window.devicePixelRatio, MAXIMUM_RESOLUTION),
+    resolution: Math.min(window.devicePixelRatio, maximumResolution),
     backgroundColor: 0x2f8fce,
   });
   app.canvas.style.width = '100%';
