@@ -3,7 +3,12 @@ import { useState } from 'react';
 import type { MatchRecord } from '../api/contracts';
 import { enqueueMatch, loadLastResult, saveLastResult, useOutboxSync } from '../api/outbox';
 import type { GameConfig } from '../game/config/gameConfig';
-import { BENCHMARK_PLAYER_HEALTH, perfRequested } from '../game/runtime/perf';
+import {
+  BENCHMARK_PLAYER_HEALTH,
+  benchmarkPlan,
+  perfReports,
+  perfRequested,
+} from '../game/runtime/perf';
 import { configFromOptions, loadOptions, loadPlayerId } from '../storage/options';
 import type { Options } from '../storage/options';
 import { MainMenu } from './MainMenu';
@@ -14,6 +19,7 @@ const QUERY_RETRIES = 2;
 const LONGEST_RETRY_DELAY_MS = 4000;
 const FIRST_RETRY_DELAY_MS = 500;
 const SEED_RANGE = 4294967296;
+const BETWEEN_CYCLES_MS = 1500;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,9 +40,14 @@ function chooseSeed(): number {
 
 function matchConfig(options: Options): GameConfig {
   const config = configFromOptions(options);
-  return perfRequested()
-    ? { ...config, player: { ...config.player, health: BENCHMARK_PLAYER_HEALTH } }
-    : config;
+  if (!perfRequested()) {
+    return config;
+  }
+  return {
+    ...config,
+    match: { durationSeconds: benchmarkPlan().seconds ?? config.match.durationSeconds },
+    player: { ...config.player, health: BENCHMARK_PLAYER_HEALTH },
+  };
 }
 
 function Shell() {
@@ -58,6 +69,12 @@ function Shell() {
 
   const finish = (record: MatchRecord): void => {
     if (perfRequested()) {
+      if (perfReports().length < benchmarkPlan().cycles) {
+        window.setTimeout(() => {
+          setTicket(null);
+          window.setTimeout(play, BETWEEN_CYCLES_MS);
+        }, BETWEEN_CYCLES_MS);
+      }
       return;
     }
     saveLastResult(record);

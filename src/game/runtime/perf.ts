@@ -87,6 +87,21 @@ export function perfRequested(): boolean {
   return new URLSearchParams(window.location.search).has('perf');
 }
 
+export interface BenchmarkPlan {
+  seconds: number | null;
+  cycles: number;
+}
+
+export function benchmarkPlan(): BenchmarkPlan {
+  const params = new URLSearchParams(window.location.search);
+  const seconds = Number(params.get('duration'));
+  const cycles = Number(params.get('cycles'));
+  return {
+    seconds: Number.isFinite(seconds) && seconds > 0 ? seconds : null,
+    cycles: Number.isInteger(cycles) && cycles > 1 ? cycles : 1,
+  };
+}
+
 export function perfReports(): readonly PerfReport[] {
   return cycles;
 }
