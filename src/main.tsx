@@ -1,9 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { App } from './ui/App';
+import './ui/styles.css';
 
 async function enableMocking(): Promise<void> {
   const { worker } = await import('./mocks/browser');
+  const { selectScenarioFromUrl } = await import('./mocks/scenarios');
+  selectScenarioFromUrl();
   await worker.start({
     onUnhandledRequest: 'bypass',
     quiet: import.meta.env.PROD,

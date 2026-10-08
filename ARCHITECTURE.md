@@ -9,10 +9,11 @@ This document describes the system as it is built, and grows with each slice. Th
 | Config | `src/game/config` | Typed gameplay parameters and their defaults | Arena size, islands, player movement, health and weapons, the Chaser and the Shooter |
 | Simulation | `src/game/sim` | The rules of the game, in pure TypeScript | World, match creation, pools, PRNG, rotation, commands, movement, weapons, projectiles, the event queue, islands, collision with islands and arena bounds, layers, hits, damage and score, ship kinds, the Chaser's pursuit and impact, the Shooter's range and fire |
 | Loop | `src/game/loop` | Timing that drives the simulation | Fixed-step clock |
-| Render | `src/game/render` | PixiJS scene | Not yet |
-| Input | `src/game/input` | Keyboard and touch, sampled once per step | Not yet |
-| UI | `src/ui` | React screens, HUD and dialogs | Placeholder screen in `src/App.tsx` |
-| API and mocks | `src/api`, `src/mocks` | Axios, TanStack Query and the MSW handlers | One example handler |
+| Runtime | `src/game/runtime` | One match on screen: loop, pause, interface store | Game session |
+| Render | `src/game/render` | PixiJS scene | Arena, ships, health bars, projectiles, effects |
+| Input | `src/game/input` | Keyboard and touch, sampled once per step | Command mask, keyboard |
+| UI | `src/ui` | React screens, HUD and dialogs | Menu, options, match, result, ranking, history |
+| API and mocks | `src/api`, `src/mocks`, `src/storage` | Axios, TanStack Query, the outbox and the MSW handlers | Ranking, history, match registration, scenarios |
 
 Dependencies point one way. The config imports nothing. The simulation imports only the config's type and receives the values when a match is created. The loop imports the simulation. Neither `pixi.js` nor `react` can be imported in the simulation: ESLint rejects it, together with `Math.random`, `Date.now` and `performance.now` ([ADR-0001](docs/adr/0001-imperative-react-pixi-bridge.md), [ADR-0005](docs/adr/0005-deterministic-simulation-and-replay.md)).
 
@@ -71,7 +72,7 @@ Ships and projectiles carry a layer: player, enemy, player shot or enemy shot. A
 
 A hit is found with a swept test: the segment from where the projectile was to where it is, against a circle of the ship's radius plus the projectile's, so a fast projectile cannot jump over a ship. The nearest ship on the path takes the damage. The projectile is marked as spent and its damage is banked on the ship; nothing else happens until the damage stage.
 
-The damage stage takes the banked damage from each ship's health. An enemy that reaches zero is worth one point and leaves the match at once; the player stays at zero health until the match rules, still to come, end the match. Then every spent projectile is removed. Each projectile therefore applies its damage once and is gone in the step it hits.
+The damage stage takes the banked damage from each ship's health. An enemy that reaches zero is worth one point and leaves the match at once; the player stays at zero health, and the match rules end the match in that step. Then every spent projectile is removed. Each projectile therefore applies its damage once and is gone in the step it hits.
 
 Three choices are worth stating:
 
@@ -81,7 +82,7 @@ Three choices are worth stating:
 
 ### Enemies
 
-A ship carries a kind: the player, a Chaser, a Shooter, or none for a ship that tests place by hand. Enemy parameters live in the config under `enemies`: both types have a radius, a speed, a turn rate and a health; the Chaser adds a contact damage, and the Shooter an attack range and a front cannon. `spawnChaser(world, x, y, heading)` and `spawnShooter(world, x, y, heading)` take a free ship from the pool and stamp it from the config the match was created with, and return nothing when the pool is full. The spawner, still to come, will call them.
+A ship carries a kind: the player, a Chaser, a Shooter, or none for a ship that tests place by hand. Enemy parameters live in the config under `enemies`: both types have a radius, a speed, a turn rate and a health; the Chaser adds a contact damage, and the Shooter an attack range and a front cannon. `spawnChaser(world, x, y, heading)` and `spawnShooter(world, x, y, heading)` take a free ship from the pool and stamp it from the config the match was created with, and return nothing when the pool is full. The spawner calls them.
 
 The enemy intent system runs right after the player's ([ADR-0016](docs/adr/0016-no-rust-webassembly.md)). For each Chaser it sets the thrust and picks a turn toward the player: none when the Chaser already faces the player within the angle it turns in one step, which keeps it from swinging from side to side; otherwise right or left, by the sign of the cross product between its heading and the direction to the player. No inverse trigonometry is involved. Movement then applies the Chaser's own speed and turn rate, which is what limits how fast it turns.
 
@@ -126,14 +127,45 @@ A ship that starts a step clear of the islands and inside the arena ends it the 
 - `reset` empties the accumulator and moves the timestamp, so time spent paused or in a hidden tab is never simulated.
 - `interpolation` returns the fraction of a step left over, for the renderer to draw between the last two states.
 
-## Mock API
+## Match flow
 
-There is no backend. The MSW service worker starts before the first render in every build, the published one included, so the deployed app behaves like development ([ADR-0012](docs/adr/0012-msw-in-production-build.md)).
+`src/game/sim/match.ts` wraps the world in a `Match`: the steps left, the countdown to the next spawn, the number of enemies spawned and the outcome. `advanceMatch` runs one step of the world, lets the spawner act, takes one step from the time left and sets the outcome: `defeated` when the health of the player is at zero, otherwise `timeUp` when no step is left. Once there is an outcome `advanceMatch` does nothing, which is what stops movement, attacks, damage, spawns and scoring. A new match is a new `Match`.
+
+The spawner (`src/game/sim/spawner.ts`) follows the sequence of enemy types of the config, one enemy per interval. It draws a point on the rectangle one radius inside the walls from the seeded generator, up to eight per step, and takes the first that is clear of the islands and at least the minimum distance from the player. A spawn that cannot happen, for lack of a point or because the maximum is alive, stays due and is tried again in the next step.
+
+These two run around `step` and not inside it, a departure from the stage list of [ADR-0006](docs/adr/0006-hand-rolled-ecs-lite.md): `step` stays the pure combat step that the replay tests exercise.
+
+## Runtime, rendering and input
+
+`src/game/runtime/session.ts` owns one match on screen ([ADR-0001](docs/adr/0001-imperative-react-pixi-bridge.md)). `createGameSession` loads the textures, creates the PixiJS application, starts the match and returns an imperative handle: pause, resume, press and release a command, destroy. React never renders per frame.
+
+- Loop: the PixiJS ticker calls one frame function. It asks the fixed-step clock how many steps fit, runs them with the current command mask, hands the events of every step to the renderer and draws with the interpolation fraction ([ADR-0004](docs/adr/0004-fixed-timestep-game-loop.md)).
+- Pause: the key, the button, a window that loses focus or a hidden tab pause the session. Nothing is stepped while paused, and resuming resets the clock and clears the held commands, so no time and no input of the pause is replayed.
+- Interface state: a vanilla Zustand store holds the phase, health, score and whole seconds left. It is written only when one of them changes, about once a second ([ADR-0003](docs/adr/0003-mutable-simulation-state-throttled-ui-store.md)).
+- Rendering (`src/game/render`): one view per pool slot, created once and hidden when the slot is free. Ships are sprites chosen by kind and by a third of health left, with a health bar above; projectiles, muzzle flashes, hit sparks and explosions come from fixed pools. Textures are loaded once through the PixiJS asset cache, with progress, and a failure is shown with a retry before the combat starts. The canvas has the size of the arena at up to twice the pixel density and is scaled by CSS, keeping 16:9.
+- Input (`src/game/input`): the keyboard and the touch buttons set bits of one command mask, read once per step. Keys are captured only while the match is running.
+- Lifecycle: `destroy` removes the listeners, destroys the application and its ticker and keeps the cached textures. The React effect that creates the session cancels a creation still in flight, which makes it safe under Strict Mode ([ADR-0002](docs/adr/0002-strict-mode-safe-pixi-lifecycle.md)).
+- Test seam: with `?e2e=1` the session exposes `window.pirateBattle` with `snapshot()` and `advance(steps)` ([ADR-0010](docs/adr/0010-e2e-testing-strategy.md)).
+
+## Interface
+
+`src/ui` holds the React screens: the main menu with its four tabs (Play, Options, Ranking, Match History), the match screen with the HUD, the pause and result dialogs and the touch controls. Dialogs are native `dialog` elements opened as modals, which keeps the focus inside them. Score, time and health are also plain text in the HUD, and the phase of the match is announced once per change.
+
+Options are validated with Zod and saved in `localStorage` together with the id of the player and the last finished match (`src/storage`, `src/api/outbox.ts`). A match takes a snapshot of the config when it starts.
+
+## API and mock
+
+There is no backend. The MSW service worker starts before the first render in every build, the published one included ([ADR-0012](docs/adr/0012-msw-in-production-build.md)).
+
+- Contracts (`src/api/contracts.ts`): Zod schemas for a match record and for the pages of the ranking and the history, used by the client and by the handlers ([ADR-0014](docs/adr/0014-zod-at-boundaries.md)).
+- Queries (`src/api/matches.ts`): Axios with a 6 s timeout, TanStack Query with the page in the query key, the previous page kept while the next loads, two retries, and a refetch every time a tab is shown. A response to a superseded request is discarded by its key and its abort signal.
+- Outbox (`src/api/outbox.ts`): a finished match is written to a persisted list first and then sent with `PUT /api/matches/{matchId}`, which is idempotent. Success removes it and invalidates the ranking and the history; failure after the retries marks it, and the player can try again. Pending records are sent again when the app loads ([ADR-0013](docs/adr/0013-match-submission-outbox.md)). An abandoned match never reaches the list.
+- Mock (`src/mocks`): the handlers keep confirmed records in `localStorage`, add fixtures for other players and consult the selected scenario on every request ([ADR-0011](docs/adr/0011-network-scenarios-via-msw.md)).
 
 ## Current limitations
 
-- The arena size, the island layout, the player's start position and the movement values are provisional until the arena is drawn and the game is balanced.
-- Island polygons, speeds, weapon values and enemy values are not validated: a malformed part, a ship or a projectile fast enough to cross an island in one step, a non-positive cooldown, a Chaser that turns wider than its contact distance, or a Shooter whose shots fall short of its attack range would not be caught.
-- Only tests spawn enemies: the spawner comes next. Nothing ends the match yet, so enemies keep pursuing and firing at a player whose health is at zero.
+- The arena layout and the gameplay values are a first balance.
+- The config is validated only for the two options of the Options tab: a malformed island, a ship or a projectile fast enough to cross an island in one step, a non-positive cooldown, a Chaser that turns wider than its contact distance, or a Shooter whose shots fall short of its attack range would not be caught.
+- Enemies do not steer around islands, and a Shooter fires at an island that stands between it and the player.
 - A ship held forward into a concave corner wider than a right angle does not come to rest: it shifts by up to about one unit from step to step, without ever entering an island. The default layout has only right angles, where ships settle.
-- Nothing is rendered yet: the rules above are exercised by unit tests only.
+- No sound, no visual regression baselines and no performance measurements yet.

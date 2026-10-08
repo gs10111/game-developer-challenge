@@ -1,0 +1,394 @@
+:root {
+  --sea: #1f6fa8;
+  --sea-deep: #123f63;
+  --sand: #f6e6bd;
+  --sand-dark: #e2c98f;
+  --wood: #7a4a21;
+  --wood-dark: #4f2e12;
+  --ink: #2b1a0a;
+  --gold: #ffcf4a;
+  --danger: #a11d1d;
+  --bar-height: 3rem;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--sea-deep);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  color: var(--sand);
+  background: var(--wood);
+  border: 2px solid var(--wood-dark);
+  border-radius: 0.5rem;
+}
+
+button:hover:not(:disabled) {
+  background: var(--wood-dark);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button.primary {
+  color: var(--ink);
+  font-weight: bold;
+  background: var(--gold);
+}
+
+button.primary:hover:not(:disabled) {
+  background: #ffdd7a;
+}
+
+button.link {
+  padding: 0;
+  color: var(--wood-dark);
+  text-decoration: underline;
+  background: none;
+  border: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--ink);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background:
+    linear-gradient(rgb(18 63 99 / 55%), rgb(18 63 99 / 75%)),
+    url('/assets/ui_scene_background.png') center / cover no-repeat;
+}
+
+.menu h1 {
+  margin: 0;
+}
+
+.menu h1 img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.tabs [aria-selected='true'] {
+  color: var(--ink);
+  font-weight: bold;
+  background: var(--sand);
+}
+
+.panel,
+.mock-panel {
+  width: min(100%, 40rem);
+  padding: 1rem 1.25rem;
+  background: var(--sand);
+  border: 3px solid var(--wood);
+  border-radius: 0.75rem;
+}
+
+.panel h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.actions p {
+  margin: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--sand-dark);
+}
+
+tr.own {
+  font-weight: bold;
+  background: var(--sand-dark);
+}
+
+.pager {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.hint {
+  margin: 0.25rem 0;
+  min-height: 1.2em;
+  color: #5b4526;
+  font-size: 0.9rem;
+}
+
+.notice {
+  padding: 0.5rem 0.75rem;
+  background: var(--sand-dark);
+  border-left: 4px solid var(--wood);
+}
+
+.field {
+  margin-bottom: 0.75rem;
+}
+
+.field label,
+.mock-panel label {
+  display: block;
+  font-weight: bold;
+}
+
+.field input,
+.mock-panel select {
+  width: 100%;
+  max-width: 20rem;
+  padding: 0.4rem 0.5rem;
+  color: var(--ink);
+  background: #fffaf0;
+  border: 2px solid var(--wood);
+  border-radius: 0.4rem;
+}
+
+.field input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.error {
+  margin: 0;
+  min-height: 1.2em;
+  color: var(--danger);
+  font-weight: bold;
+}
+
+.mock-panel summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.mock-panel button {
+  margin-top: 0.75rem;
+}
+
+.match {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  color: var(--sand);
+  background: var(--sea-deep);
+}
+
+.match-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--bar-height);
+  padding: 0.25rem 0.75rem;
+  background: var(--wood-dark);
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  align-items: center;
+  font-size: 1.1rem;
+}
+
+.hud-item {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.hud output {
+  min-width: 2ch;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud meter {
+  width: 7rem;
+  height: 0.9rem;
+}
+
+.match-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.match-actions button {
+  padding: 0.3rem 0.7rem;
+}
+
+.match-actions [aria-pressed='true'] {
+  color: var(--ink);
+  background: var(--gold);
+}
+
+.arena {
+  width: min(100vw, calc((100vh - var(--bar-height) - 2rem) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background: var(--sea);
+}
+
+.arena canvas {
+  display: block;
+  touch-action: none;
+}
+
+.controls-hint {
+  margin: 0.4rem 0.5rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: var(--bar-height) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(18 63 99 / 85%);
+}
+
+.overlay progress {
+  width: min(80%, 20rem);
+}
+
+.modal {
+  width: min(92vw, 26rem);
+  padding: 1.25rem 1.5rem;
+  color: var(--ink);
+  background: var(--sand);
+  border: 4px solid var(--wood);
+  border-radius: 0.75rem;
+}
+
+.modal::backdrop {
+  background: rgb(10 30 50 / 60%);
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.result dt {
+  font-weight: bold;
+}
+
+.result dd {
+  margin: 0;
+}
+
+.touch {
+  position: absolute;
+  inset: auto 0 0.5rem;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  pointer-events: none;
+}
+
+.touch-group {
+  display: flex;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
+
+.touch-button {
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  font-size: 1.5rem;
+  touch-action: none;
+  user-select: none;
+  background: rgb(79 46 18 / 75%);
+  border-radius: 50%;
+}
+
+@media (pointer: coarse) {
+  .controls-hint {
+    display: none;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 40rem) {
+  .controls-hint::after {
+    display: block;
+    content: 'Turn your device sideways for a larger arena.';
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

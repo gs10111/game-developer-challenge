@@ -16,8 +16,8 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | PL-04 | Limited health, reduced by enemy projectiles and by Chaser impact | `sim/systems/collision/chaserImpacts`, `sim/systems/damage` | T4, T5, U | In progress |
 | PL-05 | Movement restricted to the visible arena | `sim/systems/collision` | T3, U | In progress |
 | PL-06 | Cannot cross islands | `sim/systems/collision` | T3, U | In progress |
-| PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | Pending |
-| PL-08 | Touch controls for the same commands | `input/touch`, `ui/TouchControls` | T9 | Pending |
+| PL-07 | Keyboard controls for movement, rotation and attacks | `input/keyboard` | T3, T4 | In progress |
+| PL-08 | Touch controls for the same commands | `input/touch`, `ui/TouchControls` | T9 | In progress |
 | PL-09 | Move and fire at the same time | `input` (per-step command state), `sim/systems/playerIntent` | T4, U | In progress |
 | PL-10 | Controls shown in the interface (menu and match) | `ui/ControlsHelp` | T1 | Pending |
 
@@ -32,10 +32,10 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | EN-05 | Enemies move and rotate with limited turn speed | `sim/systems/enemyIntent`, `sim/systems/movement` | T5, U | In progress |
 | EN-06 | Enemies take damage and have their own health | `sim/systems/damage` | T4, U | In progress |
 | EN-07 | Enemies respect island collision and steer around islands | `sim/ai/steering`, `sim/systems/collision` | T5 | Pending |
-| EN-08 | Both enemy types appear in a default match (mix in the config) | `sim/systems/spawner`, `config` | T5 | Pending |
-| EN-09 | Spawn at the configured interval until the match ends | `sim/systems/spawner` | T5 | Pending |
-| EN-10 | Spawn point free of obstacles | `sim/systems/spawner` | T5, U | Pending |
-| EN-11 | Spawn point away from the player (minimum distance in the config) | `sim/systems/spawner` | T5, U | Pending |
+| EN-08 | Both enemy types appear in a default match (mix in the config) | `sim/systems/spawner`, `config` | T5 | In progress |
+| EN-09 | Spawn at the configured interval until the match ends | `sim/systems/spawner` | T5 | In progress |
+| EN-10 | Spawn point free of obstacles | `sim/systems/spawner` | T5, U | In progress |
+| EN-11 | Spawn point away from the player (minimum distance in the config) | `sim/systems/spawner` | T5, U | In progress |
 
 ## Arena, collisions and combat (Challenge 2)
 
@@ -54,15 +54,15 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Test | Status |
 | --- | --- | --- | --- | --- |
-| MT-01 | Configurable duration between 60 and 180 s of active play | `config`, `sim/clock` | T1, T6 | Pending |
+| MT-01 | Configurable duration between 60 and 180 s of active play | `config`, `sim/clock` | T1, T6 | In progress |
 | MT-02 | Each enemy destroyed by the player is worth 1 point | `sim/systems/damage` | T4, U | In progress |
-| MT-03 | Match ends when time runs out or health reaches zero, with the reason recorded | `sim/match` | T6 | Pending |
-| MT-04 | Ending stops movement, attacks, damage, spawns and scoring | `sim/match` | T6 | Pending |
+| MT-03 | Match ends when time runs out or health reaches zero, with the reason recorded | `sim/match` | T6 | In progress |
+| MT-04 | Ending stops movement, attacks, damage, spawns and scoring | `sim/match` | T6 | In progress |
 | MT-05 | Restart creates a fresh match: health, score, timer and entities reset | `sim/createMatch` | T6, U | In progress |
-| MT-06 | Health shown above the player and every enemy | `render/healthBars` | T4, visual | Pending |
-| MT-07 | HUD with score and remaining time | `ui/Hud` | T4, T6 | Pending |
-| MT-08 | Manual pause | `input`, `sim/match` | T7 | Pending |
-| MT-09 | Automatic pause on `blur` and on hidden tab (`visibilitychange`) | `game/lifecycle` | T7 | Pending |
+| MT-06 | Health shown above the player and every enemy | `render/healthBars` | T4, visual | In progress |
+| MT-07 | HUD with score and remaining time | `ui/Hud` | T4, T6 | In progress |
+| MT-08 | Manual pause | `input`, `sim/match` | T7 | In progress |
+| MT-09 | Automatic pause on `blur` and on hidden tab (`visibilitychange`) | `game/lifecycle` | T7 | In progress |
 | MT-10 | While paused, timer, cooldowns and simulation are suspended | `sim/clock` | T7 | Pending |
 | MT-11 | Resuming requires a player action | `ui/PauseDialog` | T7 | Pending |
 | MT-12 | Resuming does not apply movement or shots from the paused period | `input`, game loop | T7, U | In progress |
@@ -73,9 +73,9 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | --- | --- | --- | --- | --- |
 | FX-01 | Visual effect when firing | `render/fx`, `sim/events` (the shot event) | visual, U | In progress |
 | FX-02 | Explosion on destruction | `render/fx`, `sim/events` (the destroyed event) | T5, U | In progress |
-| FX-03 | Ships show damage states by health band | `render/ships` | T4, visual | Pending |
+| FX-03 | Ships show damage states by health band | `render/ships` | T4, visual | In progress |
 | FX-04 | Noticeable feedback for attacks, impacts and damage taken | `render/fx`, `sim/events` (the hit event, for shots and for a Chaser's impact) | T4, U | In progress |
-| FX-05 | Effects are short and do not hide ships or projectiles | `render` | manual | Pending |
+| FX-05 | Effects are short and do not hide ships or projectiles | `render` | manual | In progress |
 | FX-06 | Extra: firing, explosion and ambient sounds with a mute control | `audio` | manual | Pending |
 
 ## Screens, configuration and local persistence (Challenge 3)
@@ -94,8 +94,8 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | SC-10 | All gameplay parameters in one typed config | `config/gameConfig.ts` | U, Doc | In progress |
 | SC-11 | Balancing changes only the config, never system logic | `config` | Doc | Pending |
 | SC-12 | Config snapshot taken at match start; changes apply to the next match only | `sim/createMatch` | T1, U | In progress |
-| SC-13 | Refresh or leaving the combat screen ends the running match | `game/lifecycle` | T9 | Pending |
-| SC-14 | An abandoned match is not recorded in ranking or history | `api/outbox` | T9 | Pending |
+| SC-13 | Refresh or leaving the combat screen ends the running match | `game/lifecycle` | T9 | In progress |
+| SC-14 | An abandoned match is not recorded in ranking or history | `api/outbox` | T9 | In progress |
 | SC-15 | Interface, code identifiers and documentation in English | whole project | review | Pending |
 | SC-16 | Menu visual identity consistent with the assets | `ui/theme` | visual | Pending |
 

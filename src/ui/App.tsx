@@ -1,0 +1,89 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
+import type { MatchRecord } from '../api/contracts';
+import { enqueueMatch, loadLastResult, saveLastResult, useOutboxSync } from '../api/outbox';
+import { configFromOptions, loadOptions, loadPlayerId } from '../storage/options';
+import type { Options } from '../storage/options';
+import { MainMenu } from './MainMenu';
+import { MatchScreen } from './MatchScreen';
+import type { MatchTicket } from './MatchScreen';
+
+const QUERY_RETRIES = 2;
+const LONGEST_RETRY_DELAY_MS = 4000;
+const FIRST_RETRY_DELAY_MS = 500;
+const SEED_RANGE = 4294967296;
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: QUERY_RETRIES,
+      retryDelay: (attempt) => Math.min(FIRST_RETRY_DELAY_MS * 2 ** attempt, LONGEST_RETRY_DELAY_MS),
+    },
+    mutations: {
+      retryDelay: (attempt) => Math.min(FIRST_RETRY_DELAY_MS * 2 ** attempt, LONGEST_RETRY_DELAY_MS),
+    },
+  },
+});
+
+function chooseSeed(): number {
+  const requested = Number(new URLSearchParams(window.location.search).get('seed'));
+  return Number.isInteger(requested) && requested > 0 ? requested : Date.now() % SEED_RANGE;
+}
+
+function Shell() {
+  useOutboxSync();
+  const [options, setOptions] = useState<Options>(loadOptions);
+  const [playerId] = useState(loadPlayerId);
+  const [lastResult, setLastResult] = useState<MatchRecord | null>(loadLastResult);
+  const [ticket, setTicket] = useState<MatchTicket | null>(null);
+
+  const play = (): void => {
+    setTicket({
+      matchId: crypto.randomUUID(),
+      seed: chooseSeed(),
+      config: configFromOptions(options),
+      playerId,
+      playerName: options.playerName,
+    });
+  };
+
+  const finish = (record: MatchRecord): void => {
+    saveLastResult(record);
+    setLastResult(record);
+    enqueueMatch(record);
+  };
+
+  if (ticket !== null) {
+    return (
+      <MatchScreen
+        key={ticket.matchId}
+        ticket={ticket}
+        onFinished={finish}
+        onPlayAgain={play}
+        onExit={() => {
+          setTicket(null);
+        }}
+      />
+    );
+  }
+  return (
+    <MainMenu
+      options={options}
+      playerId={playerId}
+      lastResult={lastResult}
+      onOptionsSaved={setOptions}
+      onPlay={play}
+      onReset={() => {
+        setLastResult(null);
+      }}
+    />
+  );
+}
+
+export function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Shell />
+    </QueryClientProvider>
+  );
+}

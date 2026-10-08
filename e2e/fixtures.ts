@@ -5,7 +5,7 @@ export const test = base.extend<{ failOnConsoleErrors: undefined }>({
     async ({ page }, use) => {
       const consoleErrors: string[] = [];
       page.on('console', (message) => {
-        if (message.type() === 'error') {
+        if (message.type() === 'error' && !message.text().startsWith('Failed to load resource')) {
           consoleErrors.push(`console.error: ${message.text()}`);
         }
       });

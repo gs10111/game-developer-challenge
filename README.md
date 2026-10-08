@@ -2,7 +2,25 @@
 
 A top-down 2D naval shooter built with React, TypeScript and PixiJS for the Jungle Gaming game developer challenge. The original statement, in Portuguese, is in [CHALLENGE.md](CHALLENGE.md).
 
-The project is built in small slices. [docs/requirements.md](docs/requirements.md) lists every requirement with its status, and [docs/adr/](docs/adr/README.md) records the architecture decisions. At this stage the app is a placeholder screen that proves the toolchain end to end, including the mock API in the production build.
+The game is playable: a match against Chasers and Shooters among islands, with keyboard and touch controls, pause, a result screen, a ranking and a match history served by a mock API.
+
+[docs/requirements.md](docs/requirements.md) lists every requirement with its status, [docs/adr/](docs/adr/README.md) records the architecture decisions, and [ARCHITECTURE.md](ARCHITECTURE.md) describes the system as built.
+
+## Play
+
+| Action | Keyboard | Touch |
+| --- | --- | --- |
+| Sail forward | W or Up | ▲ |
+| Turn | A / D or Left / Right | ↺ ↻ |
+| Front cannon | Space | ● |
+| Left and right broadsides | Q / E | ◀ ▶ |
+| Pause | P or Esc | Pause button |
+
+A match lasts the configured session time or until the ship is destroyed. Each enemy sunk by the player is worth one point; a Chaser that blows itself up on the player is worth none. The match pauses by itself when the window loses focus or the tab is hidden, and only the player resumes it.
+
+The **Options** tab sets the game session time, from 60 to 180 whole seconds, and the enemy spawn time, from 0.5 to 10 seconds. Both are validated, saved in the browser and applied to the next match. Every other gameplay value lives in the typed config, `src/game/config/gameConfig.ts`.
+
+On a phone the game is meant to be played in landscape; the arena keeps its 16:9 shape and always fits the screen.
 
 ## Requirements
 
@@ -71,8 +89,47 @@ The app itself reads none. The tooling reads these:
 
 ## Mock API
 
-There is no backend. [MSW](https://mswjs.io/) answers the API calls from a service worker that starts before the first render in every build, the published one included ([ADR-0012](docs/adr/0012-msw-in-production-build.md)). Today it serves one example endpoint, `GET /api/health`. The ranking and match history endpoints and the selectable network scenarios are not implemented yet.
+There is no backend. [MSW](https://mswjs.io/) answers the API calls from a service worker that starts before the first render in every build, the published one included ([ADR-0012](docs/adr/0012-msw-in-production-build.md)). Confirmed records and pending submissions are kept in the browser, so they survive a refresh.
 
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/ranking?sessionSeconds&spawnSeconds&page&pageSize` | Ranking of the matches played with the same settings, by score; ties go to the earlier match, then to the match id |
+| `GET /api/players/{playerId}/matches?page&pageSize` | Match history of one player, newest first |
+| `PUT /api/matches/{matchId}` | Registers a finished match. Sending the same match again returns the stored record, so retries never duplicate it ([ADR-0013](docs/adr/0013-match-submission-outbox.md)) |
+
+The contracts are Zod schemas in `src/api/contracts.ts`, shared by the client and the handlers. Other players are fixtures.
+
+The **Mock API scenarios** panel at the bottom of the menu selects how the mock behaves, and restores the initial data. A scenario can also be chosen in the address, as in `/?scenario=slow`.
+
+| Scenario | Behaviour |
+| --- | --- |
+| `success` | Answers after 150 ms |
+| `empty` | Lists come back empty |
+| `slow` | Answers after 2.5 s |
+| `jitter` | A fixed cycle of latencies (1200, 80, 700 and 40 ms), so answers arrive out of order |
+| `server-error`, `client-error` | HTTP 500 or 400 on every request |
+| `network-error` | The connection fails |
+| `timeout` | No answer; the client gives up after 6 s |
+| `reads-fail` | Ranking and history answer 503; saving works |
+| `timeout-after-save` | The match is stored but the first answer never arrives; the retry gets the stored record |
+| `save-unavailable` | Saving answers 503; the record stays pending and is sent again after recovery or a refresh |
+
+Latencies are fixed numbers, never random, so tests are reproducible.
+
+## Tests
+
+- Unit tests (Vitest) cover the simulation: movement, weapons, collisions, damage, both enemy types, the spawner, the match rules and replays from a seed.
+- E2E tests (Playwright, desktop and mobile Chromium) drive the real controls against the production build. With `?e2e=1` the page exposes `window.pirateBattle`, which reads the state of the match and advances the simulation by whole steps; the rules, inputs, collisions and rendering are the real ones.
+
+## Assets
+
+The sprites in `public/assets` are copied from the `assets/` folder supplied with the challenge (ships, cannon ball, explosion, fire, sand and water tiles, the title and the menu background).
+
+## Known limitations
+
+- Enemies head straight for the player and slide along a shore in their way; they do not plan a route around islands.
+- There is no sound, no visual regression baseline and no performance report yet.
+- The E2E tests cover the main flows, not every case listed in the challenge.
 ## Deploy
 
 `vercel.json` builds the project with pnpm and rewrites every route to `index.html`.
