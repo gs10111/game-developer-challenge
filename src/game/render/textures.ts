@@ -16,7 +16,14 @@ const NAMES: readonly string[] = [
 
 export type GameTextures = Readonly<Record<string, Texture>>;
 
+let plannedFailures =
+  new URLSearchParams(window.location.search).get('assets') === 'fail-once' ? 1 : 0;
+
 export async function loadTextures(onProgress: (fraction: number) => void): Promise<GameTextures> {
+  if (plannedFailures > 0) {
+    plannedFailures -= 1;
+    throw new Error('The address asked for the assets to fail once');
+  }
   const base = `${import.meta.env.BASE_URL}assets/`;
   const sources = NAMES.map((name) => ({ alias: name, src: `${base}${name}.png` }));
   return Assets.load<GameTextures>(sources, onProgress);

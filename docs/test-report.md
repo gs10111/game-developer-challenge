@@ -7,7 +7,7 @@ State of the tests at commit `2441034`, 8 October 2026, taken from the CI run of
 | Lint | `pnpm lint` | No findings |
 | Typecheck | `pnpm typecheck` | No errors |
 | Unit tests | `pnpm test` | 236 of 236 passing, in 42 files |
-| E2E tests | `pnpm test:e2e` | 24 of 24 passing: 12 tests, each on desktop and on mobile Chromium |
+| E2E tests | `pnpm test:e2e` | 36 of 36 passing: 18 tests, each on desktop and on mobile Chromium |
 
 ## Unit tests
 
@@ -41,6 +41,12 @@ Playwright against the production build, in a desktop and a mobile project. With
 | MT-03 a match that ends shows its result, saves one record and survives a refresh | `e2e/match.spec.ts` |
 | MSW-08 a record that cannot be saved stays pending and is saved after the API recovers | `e2e/match.spec.ts` |
 | SC-14 leaving a match abandons it, and the touch controls steer the ship | `e2e/match.spec.ts` |
+| AR-06 a failure to load the assets is shown with a retry, and the retry starts the match | `e2e/flows.spec.ts` |
+| MT-09 losing the focus pauses the match until the player resumes it | `e2e/flows.spec.ts` |
+| MT-01 a match whose ship survives ends when its time is up | `e2e/flows.spec.ts` |
+| MT-05 Play Again starts a clean match | `e2e/flows.spec.ts` |
+| API-14 a timeout after the server saved is recovered by sending again, with one record | `e2e/flows.spec.ts` |
+| API-11 a saved match appears in the ranking on the page its score puts it | `e2e/flows.spec.ts` |
 
 How these map to the twelve flows of the challenge, and what each flow still lacks, is in the table at the end of [requirements.md](requirements.md). There are no visual regression tests.
 

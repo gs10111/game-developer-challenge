@@ -54,7 +54,7 @@ Network failures are scenarios of the mock. Choose one in the **Mock API scenari
 | A timeout after the server saved | Open `/?scenario=timeout-after-save` and finish a match: the first answer never arrives, the client gives up after 6 s and sends again, and the record appears once |
 | Slow and out-of-order answers | Open `/?scenario=slow` or `/?scenario=jitter` and move between the pages of the ranking quickly: the page shown is always the one asked for last |
 | The app without a service worker | Open `/?mock=in-page`: the same handlers answer in the page |
-| Assets that fail to load | In the developer tools, block the requests to `*/assets/*.png`, press **Play**: the match screen shows the failure and **Try again**. Unblock and try again |
+| Assets that fail to load | Open `/?assets=fail-once` and press **Play**: the first load is made to fail. Or, in the developer tools, block the requests to `*/assets/*.png`, press **Play**: the match screen shows the failure and **Try again**. Unblock and try again |
 
 To finish a match at once for the recipes above, add `e2e=1` to the address (`/?e2e=1&scenario=save-unavailable`), press **Play** and run `pirateBattle.advance(7200)` in the console: a ship that does nothing is sunk in about twenty seconds of game time.
 

@@ -13,7 +13,7 @@
 
 ## Status at delivery
 
-Of the 136 requirements of the matrix, 133 are built, 2 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 236 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
+Of the 136 requirements of the matrix, 133 are built, 2 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 236 unit tests and 18 E2E tests on desktop and mobile Chromium, all passing in CI.
 
 ### Built
 
@@ -30,7 +30,7 @@ Of the 136 requirements of the matrix, 133 are built, 2 are partly built and 1 i
 
 | ID | Built | Missing |
 | --- | --- | --- |
-| PW-01 | Twelve E2E tests for the main flows | The cases listed per flow in [requirements.md](requirements.md): flows T2 and T12 have no test, T3 to T7 and T9 to T11 are partial |
+| PW-01 | Eighteen E2E tests; flows T1, T2, T6, T7, T8 and T11 are covered | T3 to T5, T9 and T10 are partial, and T12 lacks the late responses; the table at the end of [requirements.md](requirements.md) says what each one misses |
 | API-12 | A late response cannot overwrite newer data: the page is in the query key and requests carry an abort signal | A test that shows it |
 
 Outside the matrix: only the two options and the captain name are validated, not the whole game config.

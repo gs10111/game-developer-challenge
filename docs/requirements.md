@@ -187,17 +187,17 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | Flow | Covers | Status |
 | --- | --- | --- |
 | T1 Options navigation, validation and persistence | SC-01 to SC-04, SC-12, UX-07, UX-09, UX-11 | Done: `e2e/menu.spec.ts`, options |
-| T2 Asset loading, failures and retry | AR-05, AR-06, UX-06 | Pending: the app shows the failure and a retry, but no test drives it |
+| T2 Asset loading, failures and retry | AR-05, AR-06, UX-06 | Done: `e2e/flows.spec.ts`, with the failure asked for in the address (`?assets=fail-once`) |
 | T3 Match start, movement, rotation, arena limits and island collision | PL-01, PL-05 to PL-07, CB-01, CB-02, AR-03 | In progress: sailing, turning and the wall in `e2e/match.spec.ts`; islands only in unit tests |
 | T4 Front and broadside fire, damage, cooldown and scoring without duplication | PL-02 to PL-04, PL-09, CB-03 to CB-08, MT-02, MT-06, MT-07 | In progress: front cannon and broadside in `e2e/match.spec.ts`; damage, cooldown and score only in unit tests |
 | T5 Chaser and Shooter behaviour and spawn interval | EN-01 to EN-11, FX-02 | In progress: spawn interval and both types in `e2e/match.spec.ts`; behaviours only in unit tests |
-| T6 End by time and by death, stopped simulation and clean restart | MT-01, MT-03 to MT-05 | In progress: end by death and the stopped simulation in `e2e/match.spec.ts`; end by time and restart only in unit tests |
-| T7 Pause, focus loss and resume without timer drift | MT-08 to MT-12, UX-08 | In progress: manual pause and resume in `e2e/match.spec.ts`; loss of focus not tested |
+| T6 End by time and by death, stopped simulation and clean restart | MT-01, MT-03 to MT-05 | Done: end by death in `e2e/match.spec.ts`; end by time, the stopped simulation and a clean restart in `e2e/flows.spec.ts` |
+| T7 Pause, focus loss and resume without timer drift | MT-08 to MT-12, UX-08 | Done: manual pause in `e2e/match.spec.ts`, loss of focus in `e2e/flows.spec.ts`; a hidden tab is not tested |
 | T8 Result display and persistence after refresh | SC-06, SC-07 | Done: `e2e/match.spec.ts`, result and refresh |
 | T9 Abandoning, repeated navigation and touch controls | PL-08, SC-13, SC-14, AR-07 to AR-09, UX-03 to UX-05 | In progress: abandoning and touch controls in `e2e/match.spec.ts`; repeated navigation not tested |
 | T10 Ranking and Match History: pagination, loading, empty and error | API-02, API-05 to API-07, API-09, API-10, API-17, MSW-03, MSW-05, MSW-06 | In progress: ranking pages, empty and error in `e2e/menu.spec.ts`; loading state and history pages not tested |
-| T11 Submission, both tabs refreshed and pending submission after refresh | API-03, API-04, API-11, API-13, API-15, API-16, MSW-02, MSW-08, MSW-12 | In progress: record saved, history and a pending record after a refresh in `e2e/match.spec.ts`; the ranking tab is not checked after a submission |
-| T12 Resubmission after timeout without duplication and late responses | API-12 to API-14, MSW-04, MSW-07 | Pending: the scenarios exist (`timeout-after-save`, `jitter`), no test uses them |
+| T11 Submission, both tabs refreshed and pending submission after refresh | API-03, API-04, API-11, API-13, API-15, API-16, MSW-02, MSW-08, MSW-12 | Done: history and a pending record after a refresh in `e2e/match.spec.ts`, the ranking after a submission in `e2e/flows.spec.ts` |
+| T12 Resubmission after timeout without duplication and late responses | API-12 to API-14, MSW-04, MSW-07 | In progress: sending again after a timeout, with one record, in `e2e/flows.spec.ts`; late responses not tested |
 
 ## Performance (Challenge 9)
 
