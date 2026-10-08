@@ -4,15 +4,11 @@ import type { Layer } from '../collision/layers';
 import { EventKind, pushEvent, WeaponName } from '../events';
 import { cosine, sine } from '../math/rotation';
 import { acquire } from '../pool';
-import { STEPS_PER_SECOND } from '../stepRate';
+import { stepsFromSeconds } from '../stepRate';
 import type { Ship, World } from '../world';
 
 const BROADSIDE_PROJECTILES = 3;
 const BROADSIDE_MIDDLE = (BROADSIDE_PROJECTILES - 1) / 2;
-
-function stepsFromSeconds(seconds: number): number {
-  return Math.max(1, Math.round(seconds * STEPS_PER_SECOND));
-}
 
 function cooled(cooldown: number): number {
   return cooldown > 0 ? cooldown - 1 : cooldown;

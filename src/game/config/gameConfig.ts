@@ -1,3 +1,5 @@
+export type EnemyKind = 'chaser' | 'shooter';
+
 export interface Point {
   readonly x: number;
   readonly y: number;
@@ -52,8 +54,22 @@ export interface GameConfig {
       readonly attackRange: number;
       readonly weapons: { readonly front: Weapon };
     };
+    readonly spawn: {
+      readonly intervalSeconds: number;
+      readonly minimumDistance: number;
+      readonly maximumAlive: number;
+      readonly sequence: readonly EnemyKind[];
+    };
+  };
+  readonly match: {
+    readonly durationSeconds: number;
   };
 }
+
+export const OPTION_LIMITS = {
+  sessionSeconds: { minimum: 60, maximum: 180 },
+  spawnSeconds: { minimum: 0.5, maximum: 10 },
+} as const;
 
 export const DEFAULT_GAME_CONFIG: GameConfig = {
   arena: {
@@ -139,5 +155,14 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
         },
       },
     },
+    spawn: {
+      intervalSeconds: 3,
+      minimumDistance: 320,
+      maximumAlive: 10,
+      sequence: ['chaser', 'shooter', 'chaser'],
+    },
+  },
+  match: {
+    durationSeconds: 120,
   },
 };

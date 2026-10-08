@@ -29,6 +29,15 @@ export function testConfig<Arena extends GameConfig['arena']>(arena: Arena) {
           },
         },
       },
+      spawn: {
+        intervalSeconds: 3600,
+        minimumDistance: 300,
+        maximumAlive: 8,
+        sequence: ['chaser', 'shooter'],
+      },
+    },
+    match: {
+      durationSeconds: 3600,
     },
   } satisfies GameConfig;
 }
