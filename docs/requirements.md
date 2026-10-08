@@ -203,10 +203,10 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 
 | ID | Requirement | Where | Evidence | Status |
 | --- | --- | --- | --- | --- |
-| PF-01 | Combat measured in an optimised build, 60 FPS target on a documented reference machine | `vite build` + `preview` | report | In progress |
-| PF-02 | FPS, p95 frame time and entity count over a three-minute match | `game/runtime/perf`, `docs/performance.md` | report + JSON | In progress |
+| PF-01 | Combat measured in an optimised build, 60 FPS target on a documented reference machine | `vite build` + `preview` | report | Done |
+| PF-02 | FPS, p95 frame time and entity count over a three-minute match | `game/runtime/perf`, `docs/performance.md` | report + JSON | Done |
 | PF-03 | Memory after five start, play and exit cycles, investigating continuous growth | `docs/performance.md` | heap chart | Done |
-| PF-04 | Hardware, browser, resolution, match config and observed limitations | `docs/performance.md` | Doc | In progress |
+| PF-04 | Hardware, browser, resolution, match config and observed limitations | `docs/performance.md` | Doc | Done |
 
 ## Delivery (Challenge 11)
 
@@ -218,6 +218,6 @@ Every "must" in the challenge statement ([CHALLENGE.md](../CHALLENGE.md)), with 
 | DL-03 | README with setup, environment variables, controls, gameplay config, scenario selection and reset, commands and how to reproduce failures | `README.md` | Done |
 | DL-04 | Commands for dev, build, preview, lint, typecheck and Playwright | `package.json`, `compose.yaml` | Done |
 | DL-05 | ARCHITECTURE covering React/PixiJS integration, simulation loop, collisions, resources, local persistence, ranking and history (contracts, cache, pending records), limitations and balancing | `ARCHITECTURE.md` | Done |
-| DL-06 | Test and profiling reports included | `docs/performance.md`, CI artifacts | In progress |
+| DL-06 | Test and profiling reports included | `docs/performance.md`, CI artifacts | Done |
 | DL-07 | Runs from a clean checkout without private services | `compose.yaml`, `.github/workflows/ci.yml` | Done |
 | DL-08 | Every mandatory technology genuinely used (React, TS strict, PixiJS, TanStack Query, Axios, MSW, Playwright) | final review | Done |

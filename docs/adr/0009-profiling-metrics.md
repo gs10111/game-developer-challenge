@@ -28,7 +28,7 @@ The challenge asks for FPS, frame time, entity count over a three-minute match a
 - Easier: performance regressions show up as diffs in a JSON file.
 - Harder: the draw-call counter must stay out of production builds.
 - Profiling checks the average-case model from ADR-0015 instead of gating decisions: a measured load an order of magnitude above the model reopens the affected ADRs.
-- As built: the measurement is not a Playwright script. `?perf=1` starts a benchmark match with a fixed pilot and records the time between frames, the live ships and projectiles and the heap from `performance.memory`; the report is shown as JSON in the result dialog (`src/game/runtime/perf.ts`, `docs/performance.md`). Not built: simulation step time, draw calls, heap snapshots through the DevTools protocol and the heap chart. A two-minute run and the five cycles are recorded in `docs/performance.md`; the three-minute run is still to be measured.
+- As built: the measurement is not a Playwright script. `?perf=1` starts a benchmark match with a fixed pilot and records the time between frames, the live ships and projectiles and the heap from `performance.memory`; the report is shown as JSON in the result dialog (`src/game/runtime/perf.ts`, `docs/performance.md`). Not built: simulation step time, draw calls, heap snapshots through the DevTools protocol and the heap chart. The three-minute match and the five cycles are recorded in `docs/performance.md`, measured by hand in a visible window.
 - Revisit: if CI hardware is too noisy, keep CI for trend only and publish numbers from the reference machine.
 
 ## Sources

@@ -1,6 +1,6 @@
 # Performance report
 
-Status: **two runs are measured** on the published build, a two-minute match and the five cycles of the memory check. Still missing: the three-minute match the challenge asks for, and the hardware of the machine that ran them.
+Status: **measured** on the published build, on the machine described below: a three-minute match, an earlier two-minute match, and five cycles of start, play and exit. All were run by hand in a visible window; no number here comes from an automated run.
 
 ## What is measured
 
@@ -25,13 +25,13 @@ The code is in `src/game/runtime/perf.ts`; the percentiles are nearest-rank and 
 
 | Item | Value |
 | --- | --- |
-| Hardware | Not reported |
+| Hardware | Intel Core i7-4770 at 3.40 GHz, Intel HD Graphics 4600 (integrated), 12 GB of DDR3 memory |
 | Operating system | Windows, 64-bit (the browser reports NT 10.0, which is Windows 10 or 11) |
 | Browser | Microsoft Edge 154 (Chromium 154) |
-| Window | Viewport of 436 by 610 CSS pixels in the two-minute match and of 1358 by 610 in the five cycles; device pixel ratio 1 |
+| Window | Viewport of 1358 by 610 CSS pixels in the three-minute match and in the five cycles, and of 436 by 610 in the two-minute match; device pixel ratio 1. The resolution of the screen itself was not reported |
 | Canvas | 1024 by 576 pixels, scaled down by CSS to fit the window |
 | Build | The published production build |
-| Match config | Defaults: session time 120 s, an enemy every 3 s, at most 10 enemies alive; seed 7; benchmark pilot |
+| Match config | Defaults, with an enemy every 3 s and at most 10 enemies alive; seed 7; benchmark pilot. Session time of 180 s in the three-minute match, 120 s in the two-minute match and 60 s in each of the five cycles |
 
 ## Two-minute match
 
@@ -83,8 +83,51 @@ The raw report of the run:
 
 ## Three-minute match
 
-Not measured yet. The run above used the default session time of 120 seconds; the challenge asks for three minutes, which needs the session time set to 180 seconds in Options before the run.
+Measured with `/?perf=1&duration=180&seed=7`, in a window of 1358 by 610 CSS pixels. Target: 60 frames per second, which is 16.7 ms between frames.
 
+| Measure | Value |
+| --- | --- |
+| Frames | 10,789 in 180.01 s |
+| Average frames per second | 59.93 |
+| Median time between frames | 16.7 ms |
+| 95th percentile time between frames | 17.2 ms |
+| 99th percentile time between frames | 18.8 ms |
+| Longest time between frames | 34.9 ms |
+| Frames slower than 33 ms | 2 of 10,789 |
+| Live ships, the player included | 5.11 on average, 8 at most |
+| Live projectiles | 2.41 on average, 10 at most |
+| JavaScript heap | 11.64 MB at the start, 12.39 MB at the end |
+
+Reading: the match held the target for its whole length on integrated graphics. The median sits on the refresh interval, the 95th percentile is half a millisecond above it, the 99th is two milliseconds above it, and two frames in three minutes took longer than two refresh intervals. The heap grew by 0.75 MB over the match.
+
+The raw report of the run:
+
+```json
+{
+  "cycle": 1,
+  "seed": 7,
+  "sessionSeconds": 180,
+  "spawnSeconds": 3,
+  "canvasWidth": 1024,
+  "canvasHeight": 576,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+  "viewport": "1358x610",
+  "devicePixelRatio": 1,
+  "frames": {
+    "frames": 10789,
+    "seconds": 180.01,
+    "averageFps": 59.93,
+    "medianMs": 16.7,
+    "p95Ms": 17.2,
+    "p99Ms": 18.8,
+    "longestMs": 34.9,
+    "framesOver33Ms": 2
+  },
+  "ships": { "average": 5.11, "maximum": 8 },
+  "projectiles": { "average": 2.41, "maximum": 10 },
+  "heapMegabytes": { "atStart": 11.64, "atEnd": 12.39 }
+}
+```
 ## Five cycles of start, play and exit
 
 Measured with `/?perf=1&duration=60&cycles=5&seed=7`: five matches of 60 seconds in a row. Between two matches the app leaves the match screen, which destroys the session, and starts the next one. The window was 1358 by 610 CSS pixels, in Edge 154, on the published build.
@@ -112,7 +155,7 @@ The cost model of [ADR-0015](adr/0015-average-case-performance-model.md) puts a 
 ## Limitations
 
 - The measured load is well below the profile of ADR-0015: about 5 ships and 2 projectiles alive on average, against 21 and 60. The default config keeps at most 10 enemies alive, and the projectile count is lower than the fire rate of the pilot would give in open water, which suggests that many of its shots end early on a wall or an island; that was not checked. The run shows that a default match holds 60 frames per second; it does not show the headroom at the load of the profile.
-- The hardware of the run was not reported, so the result is not tied to a reference machine yet.
+- The reference machine is one desktop with a processor of 2013 and integrated graphics. Nothing was measured on a phone or on another browser engine.
 - The window was narrow, 436 CSS pixels wide. The canvas is always rendered at 1024 by 576 and scaled by CSS, so the window size changes the compositing work, not the scene.
 - `performance.memory` exists only in Chromium and is rounded by the browser unless it is started with `--enable-precise-memory-info`; a heap snapshot in the developer tools is the stronger evidence.
 - Frame times come from the ticker callback, so they include the simulation and the scene update but not the time the compositor takes after it; the Performance panel of the developer tools shows that part.

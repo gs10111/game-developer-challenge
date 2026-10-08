@@ -41,7 +41,7 @@ Average-case profile, used until the default config is final:
 
 - Easier: every performance choice carries its own cost estimate, so reviewers can check the reasoning without running anything.
 - Harder: the profile must be updated when the default spawn interval, enemy health or projectile lifetime is fixed in `gameConfig.ts`.
-- As built: the default config allows at most 10 live enemies, half the profile. The one measured run (`docs/performance.md`) held 60 frames per second at about a quarter of the profile, so the model is not contradicted and not yet tested at its own load.
+- As built: the default config allows at most 10 live enemies, half the profile. The measured runs (`docs/performance.md`) held 60 frames per second at about a quarter of the profile, so the model is not contradicted and not yet tested at its own load.
 - Revisit: when the default config or a measurement moves any row by 10× or more.
 
 ## Sources

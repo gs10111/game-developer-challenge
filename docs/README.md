@@ -7,13 +7,13 @@
 | [plans/](plans/README.md) | The plan and the outcome of each slice of work, and a record of the part built without plans |
 | [test-report.md](test-report.md) | The results of the last run of every check, the list of E2E tests and the one failure seen in CI |
 | [accessibility.md](accessibility.md) | The contrast of every text colour pair of the interface, what else is in place and what was not done |
-| [performance.md](performance.md) | The performance report: the method, the tool, a measured run of two minutes and the five cycles of the memory check |
+| [performance.md](performance.md) | The performance report: the method, the reference machine, a three-minute match at 59.9 frames per second and five cycles of start, play and exit with no growth of the heap |
 | [../ARCHITECTURE.md](../ARCHITECTURE.md) | The system as built |
 | [../CHALLENGE.md](../CHALLENGE.md) | The statement of the challenge, in Portuguese |
 
 ## Status at delivery
 
-Of the 136 requirements of the matrix, 128 are built, 7 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
+Of the 136 requirements of the matrix, 132 are built, 3 are partly built and 1 is not built. The game is published at https://game-developer-challenge-nine.vercel.app. Checks at the last commit: lint, typecheck, 230 unit tests and 12 E2E tests on desktop and mobile Chromium, all passing in CI.
 
 ### Built
 
@@ -24,7 +24,7 @@ Of the 136 requirements of the matrix, 128 are built, 7 are partly built and 1 i
 | Screens | Main menu with Play, Options, the controls, Ranking and Match History; result dialog with score, time played, reason and record status; options validated and kept after a refresh; last result kept after a refresh |
 | Ranking and history | Typed contracts, Axios, TanStack Query with pages, cache, retries and invalidation, and an outbox that registers each finished match once and keeps pending records after a failure or a refresh |
 | Mock API | MSW handlers with fixtures and local persistence, eleven selectable scenarios, a panel to choose one and restore the data, and a fallback that answers in the page when the service worker cannot |
-| Delivery | CI with lint, typecheck, unit and E2E tests in a container, a public deploy on Vercel with the mock active, README and ARCHITECTURE |
+| Delivery | CI with lint, typecheck, unit and E2E tests in a container, a public deploy on Vercel with the mock active, README, ARCHITECTURE, and the test and performance reports |
 
 ### Partly built
 
@@ -32,7 +32,6 @@ Of the 136 requirements of the matrix, 128 are built, 7 are partly built and 1 i
 | --- | --- | --- |
 | EN-07 | Enemies are blocked by islands and slide along a shore | They do not steer around an island; a Shooter fires at an island in its way |
 | PW-01 | Twelve E2E tests for the main flows | The cases listed per flow in [requirements.md](requirements.md): flows T2 and T12 have no test, T3 to T7 and T9 to T11 are partial |
-| PF-01, PF-02, PF-04, DL-06 | The test report, the benchmark run behind `?perf=1`, the method, and two measured runs on the published build: a two-minute match at 59.9 frames per second with 17.2 ms at the 95th percentile, and five cycles of start, play and exit with no growth of the heap | The three-minute run, the hardware of the machine, draw calls and heap snapshots |
 | API-12 | A late response cannot overwrite newer data: the page is in the query key and requests carry an abort signal | A test that shows it |
 
 Outside the matrix: only the two options and the captain name are validated, not the whole game config.

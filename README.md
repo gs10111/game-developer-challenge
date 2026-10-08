@@ -176,7 +176,7 @@ Sources and licences are in [LICENSES.md](LICENSES.md). The sprites in `public/a
 
 - Enemies head straight for the player and slide along a shore in their way; they do not plan a route around islands.
 - There is no visual regression baseline yet.
-- The performance report holds a measured run of two minutes (59.9 frames per second on average) and the memory check over five cycles (no growth of the heap); the three-minute run and the hardware of the machine are still missing.
+- Performance was measured on one desktop, in one browser, at the load of a default match: 59.9 frames per second over three minutes and no growth of the heap over five cycles.
 - The E2E tests cover the main flows, not every case listed in the challenge.
 ## Deploy
 
